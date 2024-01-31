@@ -1,6 +1,7 @@
 // Forex4 component
 import React, { useState, useEffect } from 'react';
 import { useCurrencyContext } from './CurrencyContext';
+import Cookies from 'js-cookie'; // Import the js-cookie library
 
 
 // import { Link } from 'react-router-dom';
@@ -13,6 +14,17 @@ const Forex4 = () => {
     const [sortOrder, setSortOrder] = useState('desc'); // 'asc', 'desc'
     const [currencyData, setCurrencyData] = useState([]);
     const { selectedCurrencies, addSelectedCurrency, removeSelectedCurrency } = useCurrencyContext();
+    const cookieName = 'selectedCurrencies';
+    const saveSelectedCurrenciesToCookie = (currencies) => {
+        Cookies.set(cookieName, JSON.stringify(currencies));
+    };
+    const loadSelectedCurrenciesFromCookie = () => {
+        const cookieValue = Cookies.get(cookieName);
+        if (cookieValue) {
+            return JSON.parse(cookieValue);
+        }
+        return [];
+    };
 
     const fetchData = async () => {
         try {
@@ -41,6 +53,10 @@ const Forex4 = () => {
             } else {
                 console.error('Invalid response format or missing data');
             }
+            const savedCurrencies = loadSelectedCurrenciesFromCookie();
+            savedCurrencies.forEach((savedCurrency) => {
+                addSelectedCurrency(savedCurrency);
+            });
         } catch (error) {
             console.error(error);
         }
@@ -60,6 +76,7 @@ const Forex4 = () => {
         }
         // Print selected currencies to console
         // console.log('Selected Currencies:', selectedCurrencies);
+        saveSelectedCurrenciesToCookie(selectedCurrencies);
     };
 
     const handlePlusClick = (clickedCurrency) => {
@@ -125,27 +142,22 @@ const Forex4 = () => {
         setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     };
 
+
     const rowsToRender = currentItems.map((currency, index) => {
         const numericChange = parseFloat(currency.change);
 
-        const rowStyles = {
-            cursor: 'pointer',
-            backgroundColor: index % 2 === 0 ? 'var(--bg-light-gray)' : 'var(--bg-black)',
-            ...(hoveredRow === index && { backgroundColor: 'var(--bg-gray-400)' }),
-        };
-
         return (
             <tr
-                key={`${currency.currency}-${index}`}  // Make the key unique
-                style={rowStyles}
+                key={`${currency.currency}-${index}`}
+                className={`cursor-pointer transition-colors duration-300 hover:bg-gray-200 ${index % 2 === 0 ? 'even:bg-white even:text-gray-800' : 'odd:bg-yellow-100 odd:text-gray-800'
+                    }`}
                 onMouseEnter={() => handleRowHover(index)}
                 onMouseLeave={() => handleRowHover(null)}
             >
                 <td className="py-0.5 px-4 border-b text-center text-sm" style={{ display: 'flex', alignItems: 'center' }}>
                     <div className="flex items-center justify-center">
                         <button
-                            className={`text-lg font-semibold ${currency.isStarred ? 'bg-green-500' : 'bg-blue-500'
-                                } p-2 rounded-md border button-without-border`}
+                            className="text-lg font-semibold p-2 rounded-md ml-2"
                             style={{ width: '30px', height: '30px', lineHeight: '1' }}
                             onClick={() => handlePlusClick(currency)}
                         >
@@ -155,15 +167,18 @@ const Forex4 = () => {
                 </td>
                 <td className="py-0.5 px-4 border-b text-center text-sm">{currency.currency}</td>
                 <td className="py-0.5 px-4 border-b text-center text-sm">{parseFloat(currency.rate).toFixed(2)}</td>
-                <td className={`py-1 px-4 border-b text-center text-sm`}>{`${numericChange.toFixed(2)} % `}</td>
+                <td className="py-1 px-4 border-b text-center text-sm">
+                    <span className={`font-semibold ${numericChange < 0 ? 'text-red-500' : 'text-green-500'}`}>
+                        {numericChange.toFixed(2)} %
+                    </span>
+                </td>
                 <td className="py-0.5 px-4 border-b text-center text-sm">
-                    {numericChange < 0 ? (
-                        <span className="text-red-500">&#9660;</span>
-                    ) : (
-                        <span className="text-green-500">&#9650;</span>
-                    )}
+                    <span className={`font-bold ${numericChange < 0 ? 'text-red-500' : 'text-green-500'}`}>
+                        {numericChange < 0 ? '▼' : '▲'}
+                    </span>
                 </td>
             </tr>
+
         );
     });
 
@@ -176,18 +191,17 @@ const Forex4 = () => {
                         className="border p-0.5 rounded-md"
                         value={itemsPerPage}
                         onChange={handleItemsPerPageChange}
-                        style={{ maxWidth: '70px', marginRight: '10px' }}
                     >
                         <option value={10}>10</option>
                         <option value={20}>20</option>
                         <option value={30}>30</option>
                     </select>
-                    <span className="text-base font-semibold">Filtrele: </span>
+                    <span className="text-base font-semibold ml-2">Filtrele: </span>
                     <select
-                        className="border p-0.5 rounded-md"
+                        className="border p-0.5 rounded-md text-sm"
                         value={filterOption}
                         onChange={handleFilterChange}
-                        style={{ maxWidth: '150px', marginRight: '10px' }}
+                        style={{ maxWidth: '120px', marginRight: '10px' }}
                     >
                         <option value="all">Hepsi</option>
                         <option value="rising">Yükselenler</option>
@@ -196,8 +210,8 @@ const Forex4 = () => {
                 </div>
                 <div className="mb-4"></div>
                 <div className="max-w-full overflow-x-auto">
-                    <table className="min-w-full bg-white border border-gray-200 rounded-lg overflow-hidden">
-                        <thead className="bg-gray-100">
+                    <table className="min-w-full border-gray-200 rounded-lg overflow-hidden">
+                        <thead className="bg-gray-300">
                             <tr>
                                 <th className="py-2 px-4 border-b" style={{ width: '50px' }}></th>
                                 <th className="py-2 px-4 border-b cursor-pointer" style={{ width: '80px' }}>Currency</th>
@@ -218,11 +232,12 @@ const Forex4 = () => {
                 </div>
             </div>
 
-            <div className="mt-4">
+            {/* <div className="mb-4">
                 <h1 className="font-bold">Takip Listem</h1>
-                <table className="min-w-full bg-white border border-gray-200 rounded-lg overflow-hidden">
+                <table className="min-w-full border border-gray-200 rounded-lg overflow-hidden">
                     <thead className="bg-gray-100">
                         <tr>
+                            <th className="py-2 px-4 border-b" style={{ width: '50px' }}></th>
                             <th className="py-2 px-4 border-b cursor-pointer" style={{ width: '80px' }}>Currency</th>
                             <th className="py-2 px-4 border-b cursor-pointer">Rate</th>
                             <th className="py-2 px-4 border-b cursor-pointer">Change</th>
@@ -232,12 +247,13 @@ const Forex4 = () => {
                     <tbody>
                         {selectedCurrencies.map((currency, index) => (
                             <tr key={index}>
+
                                 <td className="py-0.5 px-4 border-b text-center text-sm">
                                     <button
-                                        className={`text-lg font-semibold p-2 rounded-md border ml-2 ${currency.isStarred ? 'bg-green-500' : 'bg-blue-500'}`}
+                                        className={"text-lg font-semibold p-2 rounded-md border ml-2 bg-blue-500"}
                                         onClick={() => handlePlusClick(currency)}
                                     >
-                                        {currency.isStarred ? '★' : '+'}
+                                        -
                                     </button>
                                 </td>
                                 <td className="py-0.5 px-4 border-b text-center text-sm font-bold">{currency.currency}</td>
@@ -248,7 +264,7 @@ const Forex4 = () => {
                         ))}
                     </tbody>
                 </table>
-            </div>
+            </div> */}
         </div>
     );
 };

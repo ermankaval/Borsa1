@@ -8,7 +8,7 @@ const Favorites = () => {
 
     return (
         <div>
-            <Navbar />
+            {/* <Navbar /> */}
             <div className="container mx-auto mt-2 h-screen w-full lg:w-full">
                 <h1 className="text-2xl font-semibold mb-4">Favorite Currencies</h1>
                 {selectedCurrencies.length > 0 ? (

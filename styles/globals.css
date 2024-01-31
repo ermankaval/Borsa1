@@ -1,0 +1,77 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Reset CSS */
+body,
+h1,
+h2,
+h3,
+p,
+ul,
+li {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f0f0f0;
+}
+
+.currency-container {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    background-color: #333;
+    color: white;
+    padding: 10px;
+}
+
+.currency-item {
+    text-align: center;
+}
+
+.currency-item span {
+    display: block;
+    font-size: 18px;
+    margin-bottom: 5px;
+}
+
+.currency-item span:first-child {
+    font-weight: bold;
+    font-size: 20px;
+}
+
+@media (max-width: 640px) {
+    .container {
+        overflow-x: auto;
+    }
+}
+
+.overflow-x-auto {
+    overflow-x: auto;
+}
+
+.max-w-full {
+    max-width: 100%;
+}
+
+table {
+    width: 100%;
+    table-layout: fixed;
+}
+
+.button-without-border {
+    background-color: #0066ff;
+    color: #000;
+}
+
+.button-without-border.starred {
+    background-color: #FFD700;
+}
+
+.star {
+    color: #FFD700;
+    /* Yıldız rengi - sarı */
+}

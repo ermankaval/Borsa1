@@ -39,7 +39,8 @@ const useCurrencyContext = () => {
     if (!context) {
         throw new Error("useCurrencyContext must be used within a CurrencyProvider");
     }
-    return context;
+    return useContext(CurrencyContext);
 };
 
 export { CurrencyProvider, useCurrencyContext };
+

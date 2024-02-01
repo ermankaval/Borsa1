@@ -1,10 +1,6 @@
 // Forex4 component
 import React, { useState, useEffect } from 'react';
-import { useCurrencyContext } from './CurrencyContext';
-import Cookies from 'js-cookie'; // Import the js-cookie library
-
-
-// import { Link } from 'react-router-dom';
+import { CurrencyProvider, useCurrencyContext } from './CurrencyContext';
 
 const Forex4 = () => {
     const [currentPage, setCurrentPage] = useState(1);
@@ -14,17 +10,6 @@ const Forex4 = () => {
     const [sortOrder, setSortOrder] = useState('desc'); // 'asc', 'desc'
     const [currencyData, setCurrencyData] = useState([]);
     const { selectedCurrencies, addSelectedCurrency, removeSelectedCurrency } = useCurrencyContext();
-    const cookieName = 'selectedCurrencies';
-    const saveSelectedCurrenciesToCookie = (currencies) => {
-        Cookies.set(cookieName, JSON.stringify(currencies));
-    };
-    const loadSelectedCurrenciesFromCookie = () => {
-        const cookieValue = Cookies.get(cookieName);
-        if (cookieValue) {
-            return JSON.parse(cookieValue);
-        }
-        return [];
-    };
 
     const fetchData = async () => {
         try {
@@ -38,8 +23,10 @@ const Forex4 = () => {
             const response = await fetch(url, options);
             const result = await response.json();
 
+            let data; // Declare data variable outside the if block
+
             if (result && result['Update_Date']) {
-                const data = Object.keys(result)
+                data = Object.keys(result)
                     .filter((currencyKey) => currencyKey.toLowerCase() !== 'update_date')
                     .map((currencyKey) => ({
                         currency: currencyKey,
@@ -49,14 +36,11 @@ const Forex4 = () => {
                         isStarred: false,
                     }));
 
-                setCurrencyData(data);
+                setCurrencyData(data || []);
             } else {
                 console.error('Invalid response format or missing data');
             }
-            const savedCurrencies = loadSelectedCurrenciesFromCookie();
-            savedCurrencies.forEach((savedCurrency) => {
-                addSelectedCurrency(savedCurrency);
-            });
+
         } catch (error) {
             console.error(error);
         }
@@ -64,35 +48,43 @@ const Forex4 = () => {
 
     useEffect(() => {
         fetchData();
-    }, []);
+    }, [addSelectedCurrency]);
 
-    const handleSelection = (clickedCurrency) => {
-        if (selectedCurrencies.some((currency) => currency.currency === clickedCurrency.currency)) {
-            // If already selected, remove it from the list
-            removeSelectedCurrency(clickedCurrency);
-        } else {
-            // If not selected, add it to the list
-            addSelectedCurrency(clickedCurrency);
-        }
-        // Print selected currencies to console
-        // console.log('Selected Currencies:', selectedCurrencies);
-        saveSelectedCurrenciesToCookie(selectedCurrencies);
-    };
 
-    const handlePlusClick = (clickedCurrency) => {
-        const updatedCurrencyData = currencyData.map((currency) => {
-            if (currency.currency === clickedCurrency.currency) {
-                return {
-                    ...currency,
-                    isStarred: !currency.isStarred,
-                };
-            }
-            return currency;
+    const handleActionClick = (clickedCurrency) => {
+        setCurrencyData((prevCurrencyData) => {
+            const updatedCurrencyData = prevCurrencyData.map((currency) => {
+                if (currency.currency === clickedCurrency.currency) {
+                    const updatedCurrency = {
+                        ...currency,
+                        isStarred: !currency.isStarred,
+                    };
+
+                    // Check if the currency is already selected
+                    const isAlreadySelected = selectedCurrencies.some((c) => c.currency === updatedCurrency.currency);
+
+                    if (isAlreadySelected) {
+                        // If already selected, remove it from the list asynchronously
+                        setTimeout(() => {
+                            removeSelectedCurrency(updatedCurrency);
+                        });
+                    } else {
+                        // If not selected, add it to the list asynchronously
+                        setTimeout(() => {
+                            addSelectedCurrency(updatedCurrency);
+                        });
+                    }
+
+                    return updatedCurrency;
+                }
+                return currency;
+            });
+
+            return updatedCurrencyData;
         });
-
-        setCurrencyData(updatedCurrencyData);
-        handleSelection(clickedCurrency);
     };
+
+
 
     const filteredData = currencyData.filter((currency) => currency.currency.toLowerCase() !== 'update_date');
 
@@ -120,6 +112,7 @@ const Forex4 = () => {
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
     const currentItems = sortedData.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = sortedData.length > 0 ? Math.ceil(sortedData.length / itemsPerPage) : 0;
 
     const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
@@ -149,7 +142,7 @@ const Forex4 = () => {
         return (
             <tr
                 key={`${currency.currency}-${index}`}
-                className={`cursor-pointer transition-colors duration-300 hover:bg-gray-200 ${index % 2 === 0 ? 'even:bg-white even:text-gray-800' : 'odd:bg-yellow-100 odd:text-gray-800'
+                className={`cursor-pointer duration-300 hover:bg-gray-300 ${index % 2 === 0 ? 'even:bg-white even:text-gray-800' : 'odd:bg-yellow-100 odd:text-gray-800'
                     }`}
                 onMouseEnter={() => handleRowHover(index)}
                 onMouseLeave={() => handleRowHover(null)}
@@ -159,9 +152,9 @@ const Forex4 = () => {
                         <button
                             className="text-lg font-semibold p-2 rounded-md ml-2"
                             style={{ width: '30px', height: '30px', lineHeight: '1' }}
-                            onClick={() => handlePlusClick(currency)}
+                            onClick={() => handleActionClick(currency)}
                         >
-                            {currency.isStarred ? '★' : '+'}
+                            {currency.isStarred ? '★' : '☆'}
                         </button>
                     </div>
                 </td>
@@ -178,94 +171,115 @@ const Forex4 = () => {
                     </span>
                 </td>
             </tr>
-
         );
     });
 
     return (
-        <div className="container mx-auto mt-2 h-screen w-full lg:w-full">
-            <div className="overflow-x-auto">
-                <div className="flex justify-between items-center mt-4" style={{ paddingLeft: '10px' }}>
-                    <span className="text-base font-semibold">Sayfa sayısı: </span>
-                    <select
-                        className="border p-0.5 rounded-md"
-                        value={itemsPerPage}
-                        onChange={handleItemsPerPageChange}
-                    >
-                        <option value={10}>10</option>
-                        <option value={20}>20</option>
-                        <option value={30}>30</option>
-                    </select>
-                    <span className="text-base font-semibold ml-2">Filtrele: </span>
-                    <select
-                        className="border p-0.5 rounded-md text-sm"
-                        value={filterOption}
-                        onChange={handleFilterChange}
-                        style={{ maxWidth: '120px', marginRight: '10px' }}
-                    >
-                        <option value="all">Hepsi</option>
-                        <option value="rising">Yükselenler</option>
-                        <option value="falling">Düşenler</option>
-                    </select>
+        <CurrencyProvider>
+            <div className="container mx-auto mt-2 h-screen w-full lg:w-full">
+                <div className="overflow-x-auto">
+                    <div className="items-center mt-4" style={{ paddingLeft: '10px' }}>
+                        <span className="text-base font-semibold">Sayfa sayısı: </span>
+                        <select
+                            className="border p-0.5 rounded-md text-sm"
+                            value={itemsPerPage}
+                            onChange={handleItemsPerPageChange}
+                        >
+                            <option value={10}>10</option>
+                            <option value={20}>20</option>
+                            <option value={30}>30</option>
+                        </select>
+
+                        <span className="text-base font-semibold ml-2">Filtrele: </span>
+
+                        <select
+                            className="border p-0.5 rounded-md text-sm"
+                            value={filterOption}
+                            onChange={handleFilterChange}
+                            style={{ maxWidth: '130px', marginRight: '20px', marginLeft: '5px' }}
+                        >
+                            <option value="all">Hepsi</option>
+                            <option value="rising">Yükselenler</option>
+                            <option value="falling">Düşenler</option>
+                        </select>
+                    </div>
+
+                    <div className="mb-4"></div>
+                    <div className="max-w-full overflow-x-auto">
+                        <table className="min-w-full border-gray-200 rounded-lg overflow-hidden">
+                            <thead className="bg-gray-300">
+                                <tr>
+                                    <th className="py-2 px-4 border-b" style={{ width: '50px' }}></th>
+                                    <th className="py-2 px-4 border-b cursor-pointer" style={{ width: '80px' }}>Currency</th>
+                                    <th className="py-2 px-4 border-b cursor-pointer">Rate</th>
+                                    <th className="py-2 px-4 border-b cursor-pointer">Change</th>
+                                    <th className="py-2 px-4 border-b">
+                                        <button
+                                            className="text-lg font-bold p-2 rounded-md ml-2 transform rotate-180"
+                                            onClick={handleSortChange}
+                                        >
+                                            {sortOrder === 'asc' ? '↑' : '↓'}
+                                        </button>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>{rowsToRender}</tbody>
+                        </table>
+                    </div>
+                    <div className="flex justify-center mt-4">
+                        {Array.from({ length: Math.ceil(sortedData.length / itemsPerPage) }, (_, index) => (
+                            <button
+                                key={index}
+                                className={`px-3 py-1 mx-1 border rounded-full ${currentPage === index + 1 ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300'
+                                    }`}
+                                onClick={() => paginate(index + 1)}
+                            >
+                                {index + 1}
+                            </button>
+                        ))}
+                    </div>
                 </div>
-                <div className="mb-4"></div>
-                <div className="max-w-full overflow-x-auto">
-                    <table className="min-w-full border-gray-200 rounded-lg overflow-hidden">
+
+                <div className="mb-4">
+                    <h1 className="font-bold">Takip Listem</h1>
+                    <table className="min-w-full border border-gray-200 rounded-lg overflow-hidden">
                         <thead className="bg-gray-300">
                             <tr>
                                 <th className="py-2 px-4 border-b" style={{ width: '50px' }}></th>
                                 <th className="py-2 px-4 border-b cursor-pointer" style={{ width: '80px' }}>Currency</th>
                                 <th className="py-2 px-4 border-b cursor-pointer">Rate</th>
                                 <th className="py-2 px-4 border-b cursor-pointer">Change</th>
-                                <th className="py-2 px-4 border-b">
-                                    <button
-                                        className="text-lg font-semibold p-2 rounded-md border ml-2"
-                                        onClick={handleSortChange}
-                                    >
-                                        {sortOrder === 'asc' ? '↑' : '↓'}
-                                    </button>
-                                </th>
+                                <th className="py-2 px-4 border-b">Actions</th>
                             </tr>
                         </thead>
-                        <tbody>{rowsToRender}</tbody>
+                        <tbody>
+                            {selectedCurrencies.map((currency, index) => (
+                                <tr
+                                    key={index}
+                                    className={`cursor-pointer duration-300 hover:bg-gray-300 ${index % 2 === 0 ? 'even:bg-white even:text-gray-800' : 'odd:bg-yellow-100 odd:text-gray-800'}`}
+                                >
+                                    <td className="py-0.5 px-4 border-b text-center text-sm">
+                                        <button
+                                            className={"text-lg font-semibold p-2 rounded-md ml-2"}
+                                            onClick={() => handleActionClick(currency)}
+                                        >
+                                            {currency.isStarred ? '★' : '☆'}
+                                        </button>
+                                    </td>
+                                    <td className="py-0.5 px-4 border-b text-center text-sm font-bold">{currency.currency}</td>
+                                    <td className="py-0.5 px-4 border-b text-center text-sm">{parseFloat(currency.rate).toFixed(2)}</td>
+                                    <td className={`py-1 px-4 border-b text-center text-sm ${parseFloat(currency.change) < 0 ? 'text-red-500' : 'text-green-500'}`}>
+                                        {`${parseFloat(currency.change).toFixed(2)} % `}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
                     </table>
                 </div>
+
+
             </div>
-
-            {/* <div className="mb-4">
-                <h1 className="font-bold">Takip Listem</h1>
-                <table className="min-w-full border border-gray-200 rounded-lg overflow-hidden">
-                    <thead className="bg-gray-100">
-                        <tr>
-                            <th className="py-2 px-4 border-b" style={{ width: '50px' }}></th>
-                            <th className="py-2 px-4 border-b cursor-pointer" style={{ width: '80px' }}>Currency</th>
-                            <th className="py-2 px-4 border-b cursor-pointer">Rate</th>
-                            <th className="py-2 px-4 border-b cursor-pointer">Change</th>
-                            <th className="py-2 px-4 border-b">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {selectedCurrencies.map((currency, index) => (
-                            <tr key={index}>
-
-                                <td className="py-0.5 px-4 border-b text-center text-sm">
-                                    <button
-                                        className={"text-lg font-semibold p-2 rounded-md border ml-2 bg-blue-500"}
-                                        onClick={() => handlePlusClick(currency)}
-                                    >
-                                        -
-                                    </button>
-                                </td>
-                                <td className="py-0.5 px-4 border-b text-center text-sm font-bold">{currency.currency}</td>
-                                <td className="py-0.5 px-4 border-b text-center text-sm">{parseFloat(currency.rate).toFixed(2)}</td>
-                                <td className={`py-1 px-4 border-b text-center text-sm`}>{`${parseFloat(currency.change).toFixed(2)} % `}</td>
-
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div> */}
-        </div>
+        </CurrencyProvider>
     );
 };
 

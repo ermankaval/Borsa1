@@ -23,8 +23,6 @@ export default function Home() {
         <Forex4 />
       </CurrencyProvider>
 
-
-
     </>
   )
 }

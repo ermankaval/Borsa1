@@ -17,6 +17,14 @@ const LineChart = ({ currencyKey, rate, change }) => {
 
             },
         ],
+        options: {
+            legend: {
+                labels: {
+                    fontColor: 'red',
+                },
+                backgroundColor: 'yellow',
+            }
+        }
     });
 
     useEffect(() => {
@@ -68,6 +76,14 @@ const LineChart = ({ currencyKey, rate, change }) => {
                                 pointStyle: false,
                             },
                         ],
+                        options: {
+                            legend: {
+                                labels: {
+                                    fontColor: 'red',
+                                },
+                                backgroundColor: 'yellow',
+                            }
+                        }
                     });
                 } else {
                     console.error('Veri formatı uygun değil.');
@@ -107,11 +123,11 @@ const LineChart = ({ currencyKey, rate, change }) => {
                     },
                 },
                 legend: {
-                    onClick: (e, legendItem) => {
-                        // Prevent the default toggle behavior
-                        e.preventDefault();
-                    },
-                    display: false, // Set display to false to hide the legend
+                    labels: {
+                        fontColor: 'red' // Set the legend text color here
+                    }
+
+
                 },
                 hover: {
                     mode: 'x',

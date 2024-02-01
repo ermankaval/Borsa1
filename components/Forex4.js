@@ -48,7 +48,7 @@ const Forex4 = () => {
 
     useEffect(() => {
         fetchData();
-    }, [addSelectedCurrency]);
+    }, []);
 
 
     const handleActionClick = (clickedCurrency) => {
@@ -63,16 +63,13 @@ const Forex4 = () => {
                     // Check if the currency is already selected
                     const isAlreadySelected = selectedCurrencies.some((c) => c.currency === updatedCurrency.currency);
 
+                    // Use the addSelectedCurrency and removeSelectedCurrency functions directly
                     if (isAlreadySelected) {
-                        // If already selected, remove it from the list asynchronously
-                        setTimeout(() => {
-                            removeSelectedCurrency(updatedCurrency);
-                        });
+                        // If already selected, remove it from the list
+                        removeSelectedCurrency(updatedCurrency);
                     } else {
-                        // If not selected, add it to the list asynchronously
-                        setTimeout(() => {
-                            addSelectedCurrency(updatedCurrency);
-                        });
+                        // If not selected, add it to the list
+                        addSelectedCurrency(updatedCurrency);
                     }
 
                     return updatedCurrency;
@@ -83,6 +80,15 @@ const Forex4 = () => {
             return updatedCurrencyData;
         });
     };
+
+    useEffect(() => {
+        // Use useEffect for side effects (async operations, state updates) outside the rendering cycle
+        if (selectedCurrencies.length > 0) {
+            // Perform any additional actions related to selectedCurrencies
+            // Example: console.log("Selected currencies:", selectedCurrencies);
+        }
+    }, [selectedCurrencies]);
+
 
 
 
@@ -239,9 +245,8 @@ const Forex4 = () => {
                         ))}
                     </div>
                 </div>
-
-                <div className="mb-4">
-                    <h1 className="font-bold">Takip Listem</h1>
+                <div className="mb-4 mt-4">
+                    <h1 className="font-bold text-lg">Takip Listem</h1>
                     <table className="min-w-full border border-gray-200 rounded-lg overflow-hidden">
                         <thead className="bg-gray-300">
                             <tr>

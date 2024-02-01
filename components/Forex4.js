@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { CurrencyProvider, useCurrencyContext } from './CurrencyContext';
 import Cookies from 'js-cookie'; // Import js-cookie
-import LineChart from './LineChart';
+import LineChartDetay from './LineChartDetay';
 
 const Forex4 = () => {
     const [currentPage, setCurrentPage] = useState(1);
@@ -195,114 +195,118 @@ const Forex4 = () => {
     });
 
     return (
-        <CurrencyProvider>
-            <div className="container mx-auto mt-2 h-screen w-full lg:w-full">
-                <div className="overflow-x-auto">
-                    <div className="items-center mt-4" style={{ paddingLeft: '10px' }}>
-                        <span className="text-base font-semibold">Sayfa sayısı: </span>
-                        <select
-                            className="border p-0.5 rounded-md text-sm"
-                            value={itemsPerPage}
-                            onChange={handleItemsPerPageChange}
-                        >
-                            <option value={10}>10</option>
-                            <option value={20}>20</option>
-                            <option value={30}>30</option>
-                        </select>
 
-                        <span className="text-base font-semibold ml-2">Filtrele: </span>
+        <div className="container mx-auto mt-2 h-screen w-full lg:w-full">
+            <div className="overflow-x-auto">
+                <div className="items-center mt-4" style={{ paddingLeft: '10px' }}>
+                    <span className="text-base font-semibold">Sayfa sayısı: </span>
+                    <select
+                        className="border p-0.5 rounded-md text-sm"
+                        value={itemsPerPage}
+                        onChange={handleItemsPerPageChange}
+                    >
+                        <option value={10}>10</option>
+                        <option value={20}>20</option>
+                        <option value={30}>30</option>
+                    </select>
 
-                        <select
-                            className="border p-0.5 rounded-md text-sm"
-                            value={filterOption}
-                            onChange={handleFilterChange}
-                            style={{ maxWidth: '130px', marginRight: '20px', marginLeft: '5px' }}
-                        >
-                            <option value="all">Hepsi</option>
-                            <option value="rising">Yükselenler</option>
-                            <option value="falling">Düşenler</option>
-                        </select>
-                    </div>
+                    <span className="text-base font-semibold ml-2">Filtrele: </span>
 
-                    <div className="mb-4"></div>
-                    <div className="max-w-full overflow-x-auto">
-                        <table className="min-w-full border-gray-200 rounded-lg overflow-hidden">
-                            <thead className="bg-gray-300">
-                                <tr>
-                                    <th className="py-2 px-4 border-b" style={{ width: '50px' }}></th>
-                                    <th className="py-2 px-4 border-b cursor-pointer" style={{ width: '80px' }}>Currency</th>
-                                    <th className="py-2 px-4 border-b cursor-pointer">Rate</th>
-                                    <th className="py-2 px-4 border-b cursor-pointer">Change</th>
-                                    <th className="py-2 px-4 border-b">
-                                        <button
-                                            className="text-lg font-bold p-2 rounded-md ml-2 transform rotate-180"
-                                            onClick={handleSortChange}
-                                        >
-                                            {sortOrder === 'asc' ? '↑' : '↓'}
-                                        </button>
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>{rowsToRender}</tbody>
-                        </table>
-                    </div>
-                    <div className="flex justify-center mt-4">
-                        {Array.from({ length: Math.ceil(sortedData.length / itemsPerPage) }, (_, index) => (
-                            <button
-                                key={index}
-                                className={`px-3 py-1 mx-1 border rounded-full ${currentPage === index + 1 ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300'
-                                    }`}
-                                onClick={() => paginate(index + 1)}
-                            >
-                                {index + 1}
-                            </button>
-                        ))}
-                    </div>
+                    <select
+                        className="border p-0.5 rounded-md text-sm"
+                        value={filterOption}
+                        onChange={handleFilterChange}
+                        style={{ maxWidth: '130px', marginRight: '20px', marginLeft: '5px' }}
+                    >
+                        <option value="all">Hepsi</option>
+                        <option value="rising">Yükselenler</option>
+                        <option value="falling">Düşenler</option>
+                    </select>
                 </div>
-                <div className="mb-4 mt-4">
-                    <h1 className="font-bold text-lg">Takip Listem</h1>
-                    <table className="min-w-full border border-gray-200 rounded-lg overflow-hidden">
+
+                <div className="mb-4"></div>
+                <div className="max-w-full overflow-x-auto">
+                    <table className="min-w-full border-gray-200 rounded-lg overflow-hidden">
                         <thead className="bg-gray-300">
                             <tr>
                                 <th className="py-2 px-4 border-b" style={{ width: '50px' }}></th>
                                 <th className="py-2 px-4 border-b cursor-pointer" style={{ width: '80px' }}>Currency</th>
                                 <th className="py-2 px-4 border-b cursor-pointer">Rate</th>
                                 <th className="py-2 px-4 border-b cursor-pointer">Change</th>
-                                <th className="py-2 px-4 border-b">Chart</th>
+                                <th className="py-2 px-4 border-b">
+                                    <button
+                                        className="text-lg font-bold p-2 rounded-md ml-2 transform rotate-180"
+                                        onClick={handleSortChange}
+                                    >
+                                        {sortOrder === 'asc' ? '↑' : '↓'}
+                                    </button>
+                                </th>
                             </tr>
                         </thead>
-                        <tbody>
-                            {selectedCurrencies.map((currency, index) => (
-                                <tr
-                                    key={index}
-                                    className={`cursor-pointer duration-300 hover:bg-gray-300 ${index % 2 === 0 ? 'even:bg-white even:text-gray-800' : 'odd:bg-yellow-100 odd:text-gray-800'}`}
-                                >
-                                    <td className="py-0.5 px-4 border-b text-center text-sm">
-                                        <button
-                                            className={"text-lg font-semibold p-2 rounded-md ml-2"}
-                                            onClick={() => handleActionClick(currency)}
-                                        >
-                                            {currency.isStarred ? '★' : '☆'}
-                                        </button>
-                                    </td>
-                                    <td className="py-0.5 px-4 border-b text-center text-sm font-bold">{currency.currency}</td>
-                                    <td className="py-0.5 px-4 border-b text-center text-sm">{parseFloat(currency.rate).toFixed(2)}</td>
-                                    <td className={`py-1 px-4 border-b text-center text-sm ${parseFloat(currency.change) < 0 ? 'text-red-500' : 'text-green-500'}`}>
-                                        {`${parseFloat(currency.change).toFixed(2)} % `}
-                                    </td>
-                                    <td style={{ width: '100px' }}>
-                                        <LineChart currencyKey={currency.currency} rate={currency.rate} change={currency.change} />
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-
+                        <tbody>{rowsToRender}</tbody>
                     </table>
                 </div>
+                <div className="flex justify-center mt-4">
+                    {Array.from({ length: Math.ceil(sortedData.length / itemsPerPage) }, (_, index) => (
+                        <button
+                            key={index}
+                            className={`px-3 py-1 mx-1 border rounded-full ${currentPage === index + 1 ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300'
+                                }`}
+                            onClick={() => paginate(index + 1)}
+                        >
+                            {index + 1}
+                        </button>
+                    ))}
+                </div>
+            </div>
+            <div className="mb-4 mt-4">
+                <h1 className="font-bold text-lg">Takip Listem</h1>
+                <table className="min-w-full border border-gray-200 rounded-lg overflow-hidden">
+                    <thead className="bg-gray-300">
+                        <tr>
+                            <th className="py-2 px-4 border-b" style={{ width: '50px' }}></th>
+                            <th className="py-2 px-4 border-b cursor-pointer" style={{ width: '80px' }}>Currency</th>
+                            <th className="py-2 px-4 border-b cursor-pointer">Rate</th>
+                            <th className="py-2 px-4 border-b cursor-pointer">Change</th>
+                            <th className="py-2 px-4 border-b">Chart (30 days)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {selectedCurrencies.map((currency, index) => (
+                            <tr
+                                key={index}
+                                className={`cursor-pointer duration-300 hover:bg-gray-300 ${index % 2 === 0 ? 'even:bg-white even:text-gray-800' : 'odd:bg-yellow-100 odd:text-gray-800'}`}
+                                style={{ height: '5px' }} // Set the row height
+                            >
+                                <td className="py-0.5 px-4 border-b text-center text-sm">
+                                    <button
+                                        className={"text-lg font-semibold p-2 rounded-md ml-2"}
+                                        onClick={() => handleActionClick(currency)}
+                                    >
+                                        {currency.isStarred ? '★' : '☆'}
+                                    </button>
+                                </td>
+                                <td className="py-0.5 px-4 border-b text-center text-sm font-bold">{currency.currency}</td>
+                                <td className="py-0.5 px-4 border-b text-center text-sm">{parseFloat(currency.rate).toFixed(2)}</td>
+                                <td className={`py-1 px-4 border-b text-center text-sm ${parseFloat(currency.change) < 0 ? 'text-red-500' : 'text-green-500'}`}>
+                                    {`${parseFloat(currency.change).toFixed(2)} % `}
+                                </td>
+                                <td style={{ width: '50px', height: '30px' }}>
+                                    <div className="flex justify-center items-center"> {/* Center the content */}
+                                        <LineChartDetay currencyKey={currency.currency} rate={currency.rate} change={currency.change} />
+                                    </div>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
 
 
             </div>
-        </CurrencyProvider>
+
+
+        </div>
+
     );
 };
 

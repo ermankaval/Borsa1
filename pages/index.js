@@ -17,11 +17,11 @@ export default function Home() {
         <link rel="icon" href='tradERMAN_ikon_.ico' />
       </Head>
 
-      <CurrencyProvider>
-        <Navbar />
-        <Forex3 />
-        <Forex4 />
-      </CurrencyProvider>
+
+      <Navbar />
+      <Forex3 />
+      <Forex4 />
+
 
     </>
   )

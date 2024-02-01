@@ -1,6 +1,8 @@
 // Forex4 component
 import React, { useState, useEffect } from 'react';
 import { CurrencyProvider, useCurrencyContext } from './CurrencyContext';
+import Cookies from 'js-cookie'; // Import js-cookie
+import LineChart from './LineChart';
 
 const Forex4 = () => {
     const [currentPage, setCurrentPage] = useState(1);
@@ -23,24 +25,35 @@ const Forex4 = () => {
             const response = await fetch(url, options);
             const result = await response.json();
 
-            let data; // Declare data variable outside the if block
+            let data;
 
             if (result && result['Update_Date']) {
                 data = Object.keys(result)
                     .filter((currencyKey) => currencyKey.toLowerCase() !== 'update_date')
-                    .map((currencyKey) => ({
-                        currency: currencyKey,
-                        rate: result[currencyKey].Selling,
-                        change: result[currencyKey].Change,
-                        loading: false,
-                        isStarred: false,
-                    }));
+                    .map((currencyKey) => {
+                        const selling = parseFloat(result[currencyKey].Selling);
+                        const change = parseFloat(result[currencyKey].Change);
+
+                        if (isNaN(selling) || isNaN(change)) {
+                            // Handle the case where the values are not valid numbers
+                            console.error(`Invalid numeric values for ${currencyKey}: Selling=${result[currencyKey].Selling}, Change=${result[currencyKey].Change}`);
+                            return null;  // or handle it according to your use case
+                        }
+
+                        return {
+                            currency: currencyKey,
+                            rate: selling.toFixed(2),
+                            change: change.toFixed(2),
+                            loading: false,
+                            isStarred: false,
+                        };
+                    })
+                    .filter(currency => currency !== null);
 
                 setCurrencyData(data || []);
             } else {
                 console.error('Invalid response format or missing data');
             }
-
         } catch (error) {
             console.error(error);
         }
@@ -48,7 +61,15 @@ const Forex4 = () => {
 
     useEffect(() => {
         fetchData();
+
+        // Retrieve selected currencies from cookies on component mount
+        const storedSelectedCurrencies = Cookies.get('selectedCurrencies');
+        if (storedSelectedCurrencies) {
+            const parsedSelectedCurrencies = JSON.parse(storedSelectedCurrencies);
+            addSelectedCurrency(parsedSelectedCurrencies);
+        }
     }, []);
+
 
 
     const handleActionClick = (clickedCurrency) => {
@@ -72,6 +93,9 @@ const Forex4 = () => {
                         addSelectedCurrency(updatedCurrency);
                     }
 
+                    // Save the selected currencies in the cookie with Path option
+                    Cookies.set('selectedCurrencies', JSON.stringify(selectedCurrencies), { expires: 7, path: '/' }); // Set expiry and Path as needed
+
                     return updatedCurrency;
                 }
                 return currency;
@@ -80,16 +104,6 @@ const Forex4 = () => {
             return updatedCurrencyData;
         });
     };
-
-    useEffect(() => {
-        // Use useEffect for side effects (async operations, state updates) outside the rendering cycle
-        if (selectedCurrencies.length > 0) {
-            // Perform any additional actions related to selectedCurrencies
-            // Example: console.log("Selected currencies:", selectedCurrencies);
-        }
-    }, [selectedCurrencies]);
-
-
 
 
     const filteredData = currencyData.filter((currency) => currency.currency.toLowerCase() !== 'update_date');
@@ -254,7 +268,7 @@ const Forex4 = () => {
                                 <th className="py-2 px-4 border-b cursor-pointer" style={{ width: '80px' }}>Currency</th>
                                 <th className="py-2 px-4 border-b cursor-pointer">Rate</th>
                                 <th className="py-2 px-4 border-b cursor-pointer">Change</th>
-                                <th className="py-2 px-4 border-b">Actions</th>
+                                <th className="py-2 px-4 border-b">Chart</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -276,9 +290,13 @@ const Forex4 = () => {
                                     <td className={`py-1 px-4 border-b text-center text-sm ${parseFloat(currency.change) < 0 ? 'text-red-500' : 'text-green-500'}`}>
                                         {`${parseFloat(currency.change).toFixed(2)} % `}
                                     </td>
+                                    <td style={{ width: '100px' }}>
+                                        <LineChart currencyKey={currency.currency} rate={currency.rate} change={currency.change} />
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>
+
                     </table>
                 </div>
 

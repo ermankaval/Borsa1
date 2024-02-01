@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Chart from 'chart.js/auto';
 
+
 const LineChart = ({ currencyKey, rate, change }) => {
     const [chartData, setChartData] = useState({
         labels: [],

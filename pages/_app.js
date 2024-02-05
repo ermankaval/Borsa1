@@ -1,5 +1,15 @@
-import '@/styles/globals.css'
+import '@/styles/globals.css';
+import React from 'react';
+import { CurrencyProvider } from '../components/CurrencyContext'
 
-export default function App({ Component, pageProps }) {
-  return <Component {...pageProps} />
+
+
+function MyApp({ Component, pageProps }) {
+  return (
+    <CurrencyProvider>
+      <Component {...pageProps} />
+    </CurrencyProvider>
+  );
 }
+
+export default MyApp;

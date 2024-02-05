@@ -14,18 +14,9 @@ const LineChart = ({ currencyKey, rate, change }) => {
                 backgroundColor: 'rgba(75, 192, 192, 0.2)',
                 borderColor: 'rgba(75, 192, 192, 1)',
                 borderWidth: 2,
-                pointRadius: 1,
-
+                // pointRadius: 1,
             },
         ],
-        options: {
-            legend: {
-                labels: {
-                    fontColor: 'red',
-                },
-                backgroundColor: 'yellow',
-            }
-        }
     });
 
     useEffect(() => {
@@ -39,9 +30,6 @@ const LineChart = ({ currencyKey, rate, change }) => {
                 const formattedStartDate = startDate.toISOString().slice(0, 10).replace(/[-]/g, '') + '000000';
 
                 const url = `https://web-paragaranti-pubsub.foreks.com/web-services/historical-data?userName=undefined&name=S${currencyKey}&exchange=FREE&market=N&group=F&last=300&period=1440&intraPeriod=null&isLast=false&from=${formattedStartDate}&to=${formattedToday}`;
-                // console.log('Fetch URL:', url);
-                // console.log(formattedStartDate);
-                // console.log(formattedToday);
 
                 const response = await fetch(url);
 
@@ -50,10 +38,12 @@ const LineChart = ({ currencyKey, rate, change }) => {
                 }
 
                 const data = await response.json();
-                // console.log('Fetched Data:', data);
 
                 if (data && Array.isArray(data.dataSet) && data.dataSet.length > 0) {
-                    const labels = data.dataSet.map((item) => new Date(item.date).toLocaleDateString());
+                    const labels = data.dataSet.map((item) => {
+                        const date = new Date(item.date);
+                        return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'numeric' });
+                    });
                     const closePrices = data.dataSet.map((item) => item.close);
 
                     const lineColors = {
@@ -68,23 +58,15 @@ const LineChart = ({ currencyKey, rate, change }) => {
                         labels: labels,
                         datasets: [
                             {
-                                label: `${currencyKey} (90 gün)`,
+                                label: `${currencyKey}`,
                                 data: closePrices,
-                                backgroundColor: `rgba(75, 192, 192, 0.2)`,
+                                backgroundColor: lineColor,
                                 borderColor: lineColor,
                                 borderWidth: 2,
                                 pointRadius: 1,
                                 pointStyle: false,
                             },
                         ],
-                        options: {
-                            legend: {
-                                labels: {
-                                    fontColor: 'red',
-                                },
-                                backgroundColor: 'yellow',
-                            }
-                        }
                     });
                 } else {
                     console.error('Veri formatı uygun değil.');
@@ -93,59 +75,68 @@ const LineChart = ({ currencyKey, rate, change }) => {
                 console.error('Veri çekme hatası:', error.message);
             }
         };
+
         fetchData();
     }, [currencyKey]);
 
     useEffect(() => {
-        const ctx = document.getElementById(`lineChart-${currencyKey}`);
+        const canvasId = `lineChart-${currencyKey}`;
+        const ctx = document.getElementById(canvasId);
 
-        const existingChart = Chart.getChart(ctx);
-        if (existingChart) {
-            existingChart.destroy();
-        }
+        if (ctx) {
+            const existingChart = Chart.getChart(ctx);
+            if (existingChart) {
+                existingChart.destroy();
+            }
 
-        const myLineChart = new Chart(ctx, {
-            type: 'line',
-            data: chartData,
-            options: {
-                plugins: {
-                    tooltip: {
-                        mode: 'nearest',
-                        intersect: false,
-                        callbacks: {
-                            label: function (context) {
-                                const label = context.dataset.label || '';
-                                if (label) {
-                                    return `${label}: ${context.parsed.y.toFixed(2)}`;
-                                }
-                                return null;
+
+
+            const myLineChart = new Chart(ctx, {
+                type: 'line',
+                data: chartData,
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false,
+                        },
+                        title: {
+                            display: false,
+                        },
+                        tooltip: {
+                            mode: 'nearest',
+                            intersect: false,
+                            callbacks: {
+                                label: function (context) {
+                                    const label = context.dataset.label || '';
+                                    if (label) {
+                                        return `${label}: ${context.parsed.y.toFixed(2)}`;
+                                    }
+                                    return null;
+                                },
                             },
                         },
                     },
+                    hover: {
+                        mode: 'x',
+                        intersect: false,
+                    },
                 },
-                legend: {
-                    labels: {
-                        fontColor: 'red' // Set the legend text color here
-                    }
+            });
 
 
-                },
-                hover: {
-                    mode: 'x',
-                    intersect: false,
-                },
-            },
-        });
-
-
-        return () => {
-            myLineChart.destroy();
-        };
+            return () => {
+                myLineChart.destroy();
+            };
+        } else {
+            console.error(`Canvas with id ${canvasId} not found.`);
+        }
     }, [chartData, currencyKey]);
 
     return (
         <div>
-            <canvas id={`lineChart-${currencyKey}`} width="300" height="150"></canvas>
+            <canvas id={`lineChart-${currencyKey}`} width="400" height="200"></canvas>
+
         </div>
     );
 };

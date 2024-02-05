@@ -67,11 +67,3 @@ table {
     color: #000;
 }
 
-.button-without-border.starred {
-    background-color: #FFD700;
-}
-
-.star {
-    color: #FFD700;
-    /* Yıldız rengi - sarı */
-}

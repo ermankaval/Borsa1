@@ -23,16 +23,16 @@ const LineChartDetay = ({ currencyKey, rate, change }) => {
                 borderColor: 'rgba(75, 192, 192, 1)',
                 borderWidth: 2,
                 pointRadius: 1,
-
             },
         ],
         options: {
             legend: {
                 display: false,
-            }
-        }
+            },
+        },
     });
 
+    const [chartError, setChartError] = useState(null);
     const [lineColor, setLineColor] = useState(getRandomColor());
 
     useEffect(() => {
@@ -58,7 +58,6 @@ const LineChartDetay = ({ currencyKey, rate, change }) => {
                 }
 
                 const data = await response.json();
-                // console.log('Fetched Data:', data);
 
                 if (data && Array.isArray(data.dataSet) && data.dataSet.length > 0) {
                     const labels = data.dataSet.map((item) => new Date(item.date).toLocaleDateString());
@@ -88,20 +87,27 @@ const LineChartDetay = ({ currencyKey, rate, change }) => {
                         options: {
                             legend: {
                                 display: false,
-                            }
-                        }
+                            },
+                        },
                     });
                 } else {
-                    console.error('Veri formatı uygun değil.');
+                    // console.error('Veri formatı uygun değil.');
+                    setChartError('No Data');
+                    setChartData({ ...chartData, datasets: [{ data: [] }] }); // Set empty data
                 }
             } catch (error) {
-                console.error('Veri çekme hatası:', error.message);
+                // console.error('Veri çekme hatası:', error.message);
+                setChartError('No Data');
+                setChartData({ ...chartData, datasets: [{ data: [] }] }); // Set empty data
             }
         };
         fetchData();
     }, [currencyKey]);
 
     useEffect(() => {
+        if (chartError) {
+            return; // No need to render the chart if there's an error
+        }
         const ctx = document.getElementById(`lineChart-${currencyKey}`);
 
         const existingChart = Chart.getChart(ctx);
@@ -111,15 +117,7 @@ const LineChartDetay = ({ currencyKey, rate, change }) => {
 
         const myLineChart = new Chart(ctx, {
             type: 'line',
-            data: {
-                ...chartData,
-                datasets: [
-                    {
-                        ...chartData.datasets[0],
-                        borderColor: lineColor,
-                    },
-                ],
-            },
+            data: chartData, // Use chartData directly
             responsive: true,
             options: {
                 plugins: {
@@ -145,16 +143,18 @@ const LineChartDetay = ({ currencyKey, rate, change }) => {
             },
         });
 
-
-
         return () => {
             myLineChart.destroy();
         };
-    }, [chartData, currencyKey]);
+    }, [chartData, currencyKey, chartError]);
 
     return (
         <div>
-            <canvas id={`lineChart-${currencyKey}`} width="100" height="50"></canvas>
+            {chartError ? (
+                <p>No Data</p>
+            ) : (
+                <canvas id={`lineChart-${currencyKey}`} width="150" height="200"></canvas>
+            )}
         </div>
     );
 };

@@ -31,13 +31,12 @@ const Forex4 = () => {
                 data = Object.keys(result)
                     .filter((currencyKey) => currencyKey.toLowerCase() !== 'update_date')
                     .map((currencyKey) => {
-                        const selling = parseFloat(result[currencyKey].Selling);
+                        const selling = parseFloat(result[currencyKey].Selling.replace('$', ''));
                         const change = parseFloat(result[currencyKey].Change);
 
                         if (isNaN(selling) || isNaN(change)) {
-                            // Handle the case where the values are not valid numbers
                             console.error(`Invalid numeric values for ${currencyKey}: Selling=${result[currencyKey].Selling}, Change=${result[currencyKey].Change}`);
-                            return null;  // or handle it according to your use case
+                            return null;
                         }
 
                         return {
@@ -59,18 +58,46 @@ const Forex4 = () => {
         }
     };
 
+    // const currentScreenWidth = typeof window !== 'undefined' ? window.innerWidth : undefined;
+    // let isWideScreen = false;
+
+    // if (currentScreenWidth !== undefined) {
+    //     if (window.innerWidth >= 768) {
+    //         isWideScreen = true;
+    //     }
+
+    // } else {
+
+    //     console.log('window nesnesine erişim sağlanamadı.');
+    // }
+
+
+
+    // useEffect(() => {
+    //     const handleResize = () => {
+    //         isWideScreen
+    //     };
+
+    //     // Sunucu tarafında başlangıç kontrolü
+    //     if (typeof window !== 'undefined') {
+    //         handleResize();
+    //         window.addEventListener('resize', handleResize);
+
+    //         return () => {
+    //             window.removeEventListener('resize', handleResize);
+    //         };
+    //     }
+    // }, []);
+
     useEffect(() => {
         fetchData();
 
-        // Retrieve selected currencies from cookies on component mount
         const storedSelectedCurrencies = Cookies.get('selectedCurrencies');
         if (storedSelectedCurrencies) {
             const parsedSelectedCurrencies = JSON.parse(storedSelectedCurrencies);
             addSelectedCurrency(parsedSelectedCurrencies);
         }
     }, []);
-
-
 
     const handleActionClick = (clickedCurrency) => {
         setCurrencyData((prevCurrencyData) => {
@@ -81,20 +108,15 @@ const Forex4 = () => {
                         isStarred: !currency.isStarred,
                     };
 
-                    // Check if the currency is already selected
                     const isAlreadySelected = selectedCurrencies.some((c) => c.currency === updatedCurrency.currency);
 
-                    // Use the addSelectedCurrency and removeSelectedCurrency functions directly
                     if (isAlreadySelected) {
-                        // If already selected, remove it from the list
                         removeSelectedCurrency(updatedCurrency);
                     } else {
-                        // If not selected, add it to the list
                         addSelectedCurrency(updatedCurrency);
                     }
 
-                    // Save the selected currencies in the cookie with Path option
-                    Cookies.set('selectedCurrencies', JSON.stringify(selectedCurrencies), { expires: 7, path: '/' }); // Set expiry and Path as needed
+                    Cookies.set('selectedCurrencies', JSON.stringify(selectedCurrencies), { expires: 7, path: '/' });
 
                     return updatedCurrency;
                 }
@@ -104,7 +126,6 @@ const Forex4 = () => {
             return updatedCurrencyData;
         });
     };
-
 
     const filteredData = currencyData.filter((currency) => currency.currency.toLowerCase() !== 'update_date');
 
@@ -155,15 +176,17 @@ const Forex4 = () => {
         setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     };
 
-
-    const rowsToRender = currentItems.map((currency, index) => {
+    const rowsToRenderUpperTable = currentItems.map((currency, index) => {
         const numericChange = parseFloat(currency.change);
 
         return (
             <tr
                 key={`${currency.currency}-${index}`}
-                className={`cursor-pointer duration-300 hover:bg-gray-300 ${index % 2 === 0 ? 'even:bg-white even:text-gray-800' : 'odd:bg-yellow-100 odd:text-gray-800'
-                    }`}
+                className="cursor-pointer duration-300 hover:bg-gray-300"
+                style={{
+                    backgroundColor: 'white',
+                    color: 'gray.800',
+                }}
                 onMouseEnter={() => handleRowHover(index)}
                 onMouseLeave={() => handleRowHover(null)}
             >
@@ -194,8 +217,46 @@ const Forex4 = () => {
         );
     });
 
-    return (
+    const rowsToRenderLowerTable = selectedCurrencies
+        .filter((currency) => !isNaN(parseFloat(currency.change))) // Filter out currencies with NaN change values
+        .map((currency, index) => {
+            const numericChange = parseFloat(currency.change);
 
+            return (
+                <tr
+                    key={index}
+                    className="cursor-pointer duration-300 hover:bg-gray-400"
+                    style={{
+                        backgroundColor: 'white',
+                        color: 'gray.400',
+                    }}
+                >
+                    <td className="py-0.5 px-4 border-b text-center text-sm">
+                        <button
+                            className={"text-lg font-semibold p-2 rounded-md ml-2"}
+                            onClick={() => handleActionClick(currency)}
+                        >
+                            {currency.isStarred ? '★' : '☆'}
+                        </button>
+                    </td>
+                    <td className="py-0.5 px-4 border-b text-center text-sm font-bold">{currency.currency}</td>
+                    <td className="py-0.5 px-4 border-b text-center text-sm">{parseFloat(currency.rate).toFixed(2)}</td>
+                    <td className={`py-1 px-4 border-b text-center text-sm ${numericChange < 0 ? 'text-red-500' : 'text-green-500'}`}>
+                        {`${numericChange.toFixed(2)} % `}
+                    </td>
+
+                    <td>
+                        <div className="flex justify-center items-center">
+                            <LineChartDetay currencyKey={currency.currency} rate={currency.rate} change={currency.change} />
+                        </div>
+                    </td>
+
+                </tr>
+            );
+        });
+
+
+    return (
         <div className="container mx-auto mt-2 h-screen w-full lg:w-full">
             <div className="overflow-x-auto">
                 <div className="items-center mt-4" style={{ paddingLeft: '10px' }}>
@@ -226,7 +287,7 @@ const Forex4 = () => {
 
                 <div className="mb-4"></div>
                 <div className="max-w-full overflow-x-auto">
-                    <table className="min-w-full border-gray-200 rounded-lg overflow-hidden">
+                    <table className="min-w-full border-gray-200 rounded-lg overflow-hidden text-center text-sm font-semibold">
                         <thead className="bg-gray-300">
                             <tr>
                                 <th className="py-2 px-4 border-b" style={{ width: '50px' }}></th>
@@ -243,7 +304,7 @@ const Forex4 = () => {
                                 </th>
                             </tr>
                         </thead>
-                        <tbody>{rowsToRender}</tbody>
+                        <tbody>{rowsToRenderUpperTable}</tbody>
                     </table>
                 </div>
                 <div className="flex justify-center mt-4">
@@ -261,52 +322,23 @@ const Forex4 = () => {
             </div>
             <div className="mb-4 mt-4">
                 <h1 className="font-bold text-lg">Takip Listem</h1>
-                <table className="min-w-full border border-gray-200 rounded-lg overflow-hidden">
+                <table className="text-center text-sm font-semibold bg-white min-w-full border border-gray-200 rounded-lg overflow-hidden">
                     <thead className="bg-gray-300">
                         <tr>
                             <th className="py-2 px-4 border-b" style={{ width: '50px' }}></th>
                             <th className="py-2 px-4 border-b cursor-pointer" style={{ width: '80px' }}>Currency</th>
                             <th className="py-2 px-4 border-b cursor-pointer">Rate</th>
                             <th className="py-2 px-4 border-b cursor-pointer">Change</th>
-                            <th className="py-2 px-4 border-b">Chart (30 days)</th>
+                            <th className="py-2 px-4 border-b">Chart</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {selectedCurrencies.map((currency, index) => (
-                            <tr
-                                key={index}
-                                className={`cursor-pointer duration-300 hover:bg-gray-300 ${index % 2 === 0 ? 'even:bg-white even:text-gray-800' : 'odd:bg-yellow-100 odd:text-gray-800'}`}
-                                style={{ height: '5px' }} // Set the row height
-                            >
-                                <td className="py-0.5 px-4 border-b text-center text-sm">
-                                    <button
-                                        className={"text-lg font-semibold p-2 rounded-md ml-2"}
-                                        onClick={() => handleActionClick(currency)}
-                                    >
-                                        {currency.isStarred ? '★' : '☆'}
-                                    </button>
-                                </td>
-                                <td className="py-0.5 px-4 border-b text-center text-sm font-bold">{currency.currency}</td>
-                                <td className="py-0.5 px-4 border-b text-center text-sm">{parseFloat(currency.rate).toFixed(2)}</td>
-                                <td className={`py-1 px-4 border-b text-center text-sm ${parseFloat(currency.change) < 0 ? 'text-red-500' : 'text-green-500'}`}>
-                                    {`${parseFloat(currency.change).toFixed(2)} % `}
-                                </td>
-                                <td style={{ width: '50px', height: '30px' }}>
-                                    <div className="flex justify-center items-center"> {/* Center the content */}
-                                        <LineChartDetay currencyKey={currency.currency} rate={currency.rate} change={currency.change} />
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
+                        {rowsToRenderLowerTable}
                     </tbody>
                 </table>
-
-
             </div>
 
-
         </div>
-
     );
 };
 

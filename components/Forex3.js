@@ -52,12 +52,11 @@ const Main = () => {
         setSelectedCurrency((prevSelectedCurrency) =>
             selectedCurrency === currencyKey ? null : currencyKey
         );
+
+
+
     };
 
-    // const handleOptionSelect = (currencyKey) => {
-    //     // console.log(`Selected currency: ${currencyKey}`);
-    //     setSelectedCurrency(currencyKey);
-    // };
 
     return (
         <div className="flex flex-col mt-32 ml-auto mr-auto max-w-screen-lg">
@@ -90,7 +89,7 @@ const Main = () => {
                     isSelected={selectedCurrency === 'GBP'}
                 />
                 <CurrencyCard
-                    currency="GRAM ALTIN"
+                    currency="ALTIN GR"
                     rate={goldTry.rate}
                     change={goldTry.change}
                     loading={goldTry.loading}
@@ -145,7 +144,7 @@ const CurrencyCard = ({ currency, rate, change, loading, onChartToggle, onSelect
 
             <button
                 onClick={handleButtonClick}
-                className={`mt-2 px-4 py-2 text-sm ${buttonClass} text-white rounded-md focus:outline-none focus:ring focus:border-${isSelected ? 'green-300' : 'blue-300'}`}
+                className={`mt-2 px-4 py-2 text-sm ${buttonClass} text-white rounded-md focus:outline-none focus:border-${isSelected ? 'green-300' : 'blue-300'}`}
             >
                 Select
             </button>

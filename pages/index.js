@@ -1,14 +1,12 @@
-// import { Inter } from 'react-font-inter';
+// pages/index.js
 import React from 'react';
-import Head from 'next/head'
-import Navbar from '@/components/Navbar'
-import Forex3 from '@/components/Forex3'
-import Forex4 from '@/components/Forex4'
+import Head from 'next/head';
+import Navbar from '@/components/Navbar';
+import Forex3 from '@/components/Forex3';
+import Forex4 from '@/components/Forex4';
+import Counter from '../components/Counter';
 
-
-
-
-export default function Home() {
+const Home = () => {
   return (
     <>
       <Head>
@@ -17,11 +15,17 @@ export default function Home() {
         <link rel="icon" href='tradERMAN_ikon_.ico' />
       </Head>
 
-      <Navbar />
-      <Forex3 />
-      <Forex4 />
-
-
+      <div className="container mx-auto">
+        <Navbar />
+        <div className="p-5 mt-20">
+          <Counter />
+          <Forex3 />
+          <Forex4 />
+        </div>
+      </div>
     </>
-  )
-}
+  );
+};
+
+
+export default Home;

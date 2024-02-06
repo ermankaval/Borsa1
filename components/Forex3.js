@@ -52,14 +52,10 @@ const Main = () => {
         setSelectedCurrency((prevSelectedCurrency) =>
             selectedCurrency === currencyKey ? null : currencyKey
         );
-
-
-
     };
 
-
     return (
-        <div className="flex flex-col mt-32 ml-auto mr-auto max-w-screen-lg">
+        <div className="flex flex-col ml-auto mr-auto max-w-screen-lg">
             <div className="flex justify-between">
                 <CurrencyCard
                     currency="DOLAR"

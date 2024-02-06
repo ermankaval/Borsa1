@@ -172,7 +172,7 @@ const Forex4 = () => {
         return (
             <tr
                 key={`${currency.currency}-${index}`}
-                className={`cursor-pointer duration-300 ${window.innerWidth >= 640 ? 'hover:bg-gray-500' : 'hover-bg-gray-500-mobile'}`}
+                className={'cursor-pointer duration-300 hover:bg-gray-500'}
                 style={{
                     backgroundColor: 'white',
                     color: 'gray.800',
@@ -300,7 +300,7 @@ const Forex4 = () => {
                     {Array.from({ length: Math.ceil(sortedData.length / itemsPerPage) }, (_, index) => (
                         <button
                             key={index}
-                            className={`px-3 py-1 mx-1 border rounded-full ${currentPage === index + 1 ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300'
+                            className={`px-3 py-1 mx-1 border text-sm rounded-full ${currentPage === index + 1 ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300'
                                 }`}
                             onClick={() => paginate(index + 1)}
                         >

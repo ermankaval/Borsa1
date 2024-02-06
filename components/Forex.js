@@ -43,7 +43,7 @@ const Main = () => {
     }, []);
 
     return (
-        <div className="flex flex-wrap gap-4 mt-4">
+        <div className="flex flex-wrap gap-4">
 
             <a href="#" className="flex-shrink-0 w-[calc(33.33%-16px)] h-[calc(30%-16px)] p-2 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 text-center">
                 <h5 className="mb-2 text-sm font-bold tracking-tight text-gray-900 dark:text-white">DOLAR</h5>

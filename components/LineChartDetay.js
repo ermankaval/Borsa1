@@ -153,7 +153,7 @@ const LineChartDetay = ({ currencyKey, rate, change }) => {
             {chartError ? (
                 <p>No Data</p>
             ) : (
-                <canvas id={`lineChart-${currencyKey}`} width="150" height="200"></canvas>
+                <canvas id={`lineChart-${currencyKey}`} width="100" height="50"></canvas>
             )}
         </div>
     );

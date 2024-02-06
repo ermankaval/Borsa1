@@ -135,7 +135,7 @@ const LineChart = ({ currencyKey, rate, change }) => {
 
     return (
         <div>
-            <canvas id={`lineChart-${currencyKey}`} width="400" height="200"></canvas>
+            <canvas id={`lineChart-${currencyKey}`} width="600" height="300"></canvas>
 
         </div>
     );

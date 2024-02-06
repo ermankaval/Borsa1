@@ -13,7 +13,9 @@ const Forex4 = () => {
     const [currencyData, setCurrencyData] = useState([]);
     const { selectedCurrencies, addSelectedCurrency, removeSelectedCurrency } = useCurrencyContext();
 
+
     const fetchData = async () => {
+
         try {
             const url = 'https://finans.truncgil.com/v4/today.json';
 
@@ -47,7 +49,7 @@ const Forex4 = () => {
                             isStarred: false,
                         };
                     })
-                    .filter(currency => currency !== null);
+                    .filter(currency => currency !== null && !isNaN(parseFloat(currency.change))); // Filtreleme ekledik
 
                 setCurrencyData(data || []);
             } else {
@@ -58,74 +60,62 @@ const Forex4 = () => {
         }
     };
 
-    // const currentScreenWidth = typeof window !== 'undefined' ? window.innerWidth : undefined;
-    // let isWideScreen = false;
-
-    // if (currentScreenWidth !== undefined) {
-    //     if (window.innerWidth >= 768) {
-    //         isWideScreen = true;
-    //     }
-
-    // } else {
-
-    //     console.log('window nesnesine erişim sağlanamadı.');
-    // }
-
-
-
-    // useEffect(() => {
-    //     const handleResize = () => {
-    //         isWideScreen
-    //     };
-
-    //     // Sunucu tarafında başlangıç kontrolü
-    //     if (typeof window !== 'undefined') {
-    //         handleResize();
-    //         window.addEventListener('resize', handleResize);
-
-    //         return () => {
-    //             window.removeEventListener('resize', handleResize);
-    //         };
-    //     }
-    // }, []);
+    const [displayedCurrencies, setDisplayedCurrencies] = useState([]);
 
     useEffect(() => {
         fetchData();
 
-        const storedSelectedCurrencies = Cookies.get('selectedCurrencies');
+        const storedSelectedCurrencies = localStorage.getItem('selectedCurrencies');
         if (storedSelectedCurrencies) {
+            // localStorage'den alınan değeri bir diziye dönüştür
             const parsedSelectedCurrencies = JSON.parse(storedSelectedCurrencies);
-            addSelectedCurrency(parsedSelectedCurrencies);
+
+            // Eğer parsedSelectedCurrencies bir dizi değilse, bir diziye dönüştür
+            const selectedCurrenciesArray = Array.isArray(parsedSelectedCurrencies) ? parsedSelectedCurrencies : [parsedSelectedCurrencies];
+
+            // Nan değerlere sahip olanları filtrele
+            const filteredSelectedCurrencies = selectedCurrenciesArray.filter(currency => !isNaN(parseFloat(currency.change)));
+
+            // addSelectedCurrency fonksiyonuna dizi olarak ver
+            addSelectedCurrency(filteredSelectedCurrencies);
         }
     }, []);
 
+
+    useEffect(() => {
+        console.log('Selected Currencies:', selectedCurrencies);
+        // console.log('Displayed Currencies:', displayedCurrencies);
+        localStorage.setItem('selectedCurrencies', JSON.stringify(selectedCurrencies));
+    }, [selectedCurrencies, displayedCurrencies]);
+
+
+
+
     const handleActionClick = (clickedCurrency) => {
-        setCurrencyData((prevCurrencyData) => {
-            const updatedCurrencyData = prevCurrencyData.map((currency) => {
-                if (currency.currency === clickedCurrency.currency) {
-                    const updatedCurrency = {
-                        ...currency,
-                        isStarred: !currency.isStarred,
-                    };
+        // isStarred durumunu tersine çevirerek güncelle
+        const updatedCurrencyData = currencyData.map((currency) => {
+            if (currency.currency === clickedCurrency.currency) {
+                const updatedCurrency = {
+                    ...currency,
+                    isStarred: !currency.isStarred,
+                };
 
-                    const isAlreadySelected = selectedCurrencies.some((c) => c.currency === updatedCurrency.currency);
-
-                    if (isAlreadySelected) {
-                        removeSelectedCurrency(updatedCurrency);
-                    } else {
-                        addSelectedCurrency(updatedCurrency);
-                    }
-
-                    Cookies.set('selectedCurrencies', JSON.stringify(selectedCurrencies), { expires: 7, path: '/' });
-
-                    return updatedCurrency;
+                // Tersine çevrilen isStarred durumuna göre seçili dövizi ekleyip çıkar
+                if (updatedCurrency.isStarred) {
+                    addSelectedCurrency(updatedCurrency);
+                } else {
+                    removeSelectedCurrency(updatedCurrency);
                 }
-                return currency;
-            });
 
-            return updatedCurrencyData;
+                return updatedCurrency;
+            }
+            return currency;
         });
+
+        // Güncellenmiş döviz verisini setCurrencyData ile güncelle
+        setCurrencyData(updatedCurrencyData);
     };
+
 
     const filteredData = currencyData.filter((currency) => currency.currency.toLowerCase() !== 'update_date');
 
@@ -182,7 +172,7 @@ const Forex4 = () => {
         return (
             <tr
                 key={`${currency.currency}-${index}`}
-                className="cursor-pointer duration-300 hover:bg-gray-300"
+                className={`cursor-pointer duration-300 ${window.innerWidth >= 640 ? 'hover:bg-gray-500' : 'hover-bg-gray-500-mobile'}`}
                 style={{
                     backgroundColor: 'white',
                     color: 'gray.800',
@@ -217,15 +207,15 @@ const Forex4 = () => {
         );
     });
 
-    const rowsToRenderLowerTable = selectedCurrencies
-        .filter((currency) => !isNaN(parseFloat(currency.change))) // Filter out currencies with NaN change values
+    const rowsToRenderLowerTable = selectedCurrencies.length > 0 ? selectedCurrencies
+        // .filter(currency => !isNaN(parseFloat(currency.change))) // Nan değerleri filtrele
         .map((currency, index) => {
             const numericChange = parseFloat(currency.change);
 
             return (
                 <tr
                     key={index}
-                    className="cursor-pointer duration-300 hover:bg-gray-400"
+                    className="cursor-pointer duration-300 hover:bg-gray-500"
                     style={{
                         backgroundColor: 'white',
                         color: 'gray.400',
@@ -244,16 +234,15 @@ const Forex4 = () => {
                     <td className={`py-1 px-4 border-b text-center text-sm ${numericChange < 0 ? 'text-red-500' : 'text-green-500'}`}>
                         {`${numericChange.toFixed(2)} % `}
                     </td>
-
-                    <td>
+                    <td className="hidden sm:table-cell">
                         <div className="flex justify-center items-center">
                             <LineChartDetay currencyKey={currency.currency} rate={currency.rate} change={currency.change} />
                         </div>
                     </td>
-
                 </tr>
             );
-        });
+        }) : [];
+
 
 
     return (
@@ -287,7 +276,7 @@ const Forex4 = () => {
 
                 <div className="mb-4"></div>
                 <div className="max-w-full overflow-x-auto">
-                    <table className="min-w-full border-gray-200 rounded-lg overflow-hidden text-center text-sm font-semibold">
+                    <table className="min-w-full border-gray-200 rounded-lg  hover:bg-gray-500 overflow-hidden text-center text-sm font-semibold">
                         <thead className="bg-gray-300">
                             <tr>
                                 <th className="py-2 px-4 border-b" style={{ width: '50px' }}></th>
@@ -320,6 +309,8 @@ const Forex4 = () => {
                     ))}
                 </div>
             </div>
+
+
             <div className="mb-4 mt-4">
                 <h1 className="font-bold text-lg">Takip Listem</h1>
                 <table className="text-center text-sm font-semibold bg-white min-w-full border border-gray-200 rounded-lg overflow-hidden">
@@ -329,7 +320,7 @@ const Forex4 = () => {
                             <th className="py-2 px-4 border-b cursor-pointer" style={{ width: '80px' }}>Currency</th>
                             <th className="py-2 px-4 border-b cursor-pointer">Rate</th>
                             <th className="py-2 px-4 border-b cursor-pointer">Change</th>
-                            <th className="py-2 px-4 border-b">Chart</th>
+                            <th className="py-2 px-4 border-b hidden sm:table-cell">Chart</th>
                         </tr>
                     </thead>
                     <tbody>

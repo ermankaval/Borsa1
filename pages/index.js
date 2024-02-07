@@ -15,7 +15,7 @@ const Home = () => {
         <link rel="icon" href='tradERMAN_ikon_.ico' />
       </Head>
 
-      <div className="container mx-auto">
+      <div className="mx-auto">
         <Navbar />
         <div className="p-5 mt-20">
           <Counter />

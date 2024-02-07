@@ -2,12 +2,12 @@
 import React, { useState, useEffect } from 'react';
 
 const Counter = () => {
-    const [count, setCount] = useState(-1);
+    const [count, setCount] = useState(0);
 
     useEffect(() => {
         // Cookie'den değeri al ve setCount ile güncelle
         const savedCount = parseInt(getCookie('counter'), 10);
-        setCount(isNaN(savedCount) ? -1 : savedCount);
+        setCount(isNaN(savedCount) ? 0 : savedCount);
     }, []); // Boş bağımlılık dizisi, sadece ilk render'da çalışmasını sağlar
 
     useEffect(() => {

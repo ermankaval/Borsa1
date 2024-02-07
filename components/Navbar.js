@@ -7,16 +7,10 @@ import Logo from './Logo';
 import { CurrencyProvider, useCurrencyContext } from './CurrencyContext';
 import { useNavigate } from 'react-router-dom';
 
-
-
-
 const Navbar = () => {
-
     const { selectedCurrenciesCount } = useCurrencyContext();
     const [scrolled, setScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-
 
     useEffect(() => {
         const handleScroll = () => {
@@ -35,8 +29,9 @@ const Navbar = () => {
 
     return (
         <CurrencyProvider>
-            <nav className={`flex items-center justify-between p-4 ${scrolled ? 'bg-black' : ''} bg-black fixed w-full top-0 z-50`}>
-                <div className='container flex justify-between items-center'>
+            <nav className={`flex items-center justify-between p-4 ${scrolled ? 'bg-black' : ''} bg-black fixed w-full top-0 z-40`}>
+                {/* Removed the container class */}
+                <div className='flex justify-between items-center w-full'>
                     <Link href="/">
                         <Logo
                             style={`h-12 w-[80px] ${scrolled ? 'text-white' : 'text-black'}`} />

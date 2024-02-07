@@ -1,8 +1,7 @@
-// Forex4 component
 import React, { useState, useEffect } from 'react';
 import { CurrencyProvider, useCurrencyContext } from './CurrencyContext';
-import Cookies from 'js-cookie'; // Import js-cookie
 import LineChartDetay from './LineChartDetay';
+import Cookies from 'js-cookie';
 
 const Forex4 = () => {
     const [currentPage, setCurrentPage] = useState(1);
@@ -11,14 +10,12 @@ const Forex4 = () => {
     const [filterOption, setFilterOption] = useState('all'); // 'all', 'rising', 'falling'
     const [sortOrder, setSortOrder] = useState('desc'); // 'asc', 'desc'
     const [currencyData, setCurrencyData] = useState([]);
-    const { selectedCurrencies, addSelectedCurrency, removeSelectedCurrency } = useCurrencyContext();
-
+    const { selectedCurrencies = [], addSelectedCurrency, removeSelectedCurrency } = useCurrencyContext();
+    const currencySymbolsSet = new Set(currencyData.map(currency => currency.currency));
 
     const fetchData = async () => {
-
         try {
             const url = 'https://finans.truncgil.com/v4/today.json';
-
             const options = {
                 method: 'GET',
                 headers: {},
@@ -33,23 +30,26 @@ const Forex4 = () => {
                 data = Object.keys(result)
                     .filter((currencyKey) => currencyKey.toLowerCase() !== 'update_date')
                     .map((currencyKey) => {
-                        const selling = parseFloat(result[currencyKey].Selling.replace('$', ''));
-                        const change = parseFloat(result[currencyKey].Change);
+                        try {
+                            const selling = parseFloat(result[currencyKey].Selling);
+                            const change = parseFloat(result[currencyKey].Change);
 
-                        if (isNaN(selling) || isNaN(change)) {
-                            console.error(`Invalid numeric values for ${currencyKey}: Selling=${result[currencyKey].Selling}, Change=${result[currencyKey].Change}`);
+                            if (isNaN(selling) || isNaN(change)) {
+                                return null;
+                            }
+
+                            return {
+                                currency: currencyKey,
+                                rate: selling.toFixed(2),
+                                change: change.toFixed(2),
+                                isStarred: false,
+                            };
+                        } catch (error) {
+                            console.error(`Error processing ${currencyKey}:`, error);
                             return null;
                         }
-
-                        return {
-                            currency: currencyKey,
-                            rate: selling.toFixed(2),
-                            change: change.toFixed(2),
-                            loading: false,
-                            isStarred: false,
-                        };
                     })
-                    .filter(currency => currency !== null && !isNaN(parseFloat(currency.change))); // Filtreleme ekledik
+                    .filter(currency => currency !== null && !isNaN(parseFloat(currency.change)));
 
                 setCurrencyData(data || []);
             } else {
@@ -60,90 +60,40 @@ const Forex4 = () => {
         }
     };
 
-    const [displayedCurrencies, setDisplayedCurrencies] = useState([]);
-
     useEffect(() => {
         fetchData();
-
-        const storedSelectedCurrencies = localStorage.getItem('selectedCurrencies');
-        if (storedSelectedCurrencies) {
-            // localStorage'den alınan değeri bir diziye dönüştür
-            const parsedSelectedCurrencies = JSON.parse(storedSelectedCurrencies);
-
-            // Eğer parsedSelectedCurrencies bir dizi değilse, bir diziye dönüştür
-            const selectedCurrenciesArray = Array.isArray(parsedSelectedCurrencies) ? parsedSelectedCurrencies : [parsedSelectedCurrencies];
-
-            // Nan değerlere sahip olanları filtrele
-            const filteredSelectedCurrencies = selectedCurrenciesArray.filter(currency => !isNaN(parseFloat(currency.change)));
-
-            // addSelectedCurrency fonksiyonuna dizi olarak ver
-            addSelectedCurrency(filteredSelectedCurrencies);
-        }
     }, []);
 
 
-    useEffect(() => {
-        console.log('Selected Currencies:', selectedCurrencies);
-        // console.log('Displayed Currencies:', displayedCurrencies);
-        localStorage.setItem('selectedCurrencies', JSON.stringify(selectedCurrencies));
-    }, [selectedCurrencies, displayedCurrencies]);
 
 
-
-
-    const handleActionClick = (clickedCurrency) => {
-        // isStarred durumunu tersine çevirerek güncelle
-        const updatedCurrencyData = currencyData.map((currency) => {
-            if (currency.currency === clickedCurrency.currency) {
-                const updatedCurrency = {
-                    ...currency,
-                    isStarred: !currency.isStarred,
-                };
-
-                // Tersine çevrilen isStarred durumuna göre seçili dövizi ekleyip çıkar
-                if (updatedCurrency.isStarred) {
-                    addSelectedCurrency(updatedCurrency);
-                } else {
-                    removeSelectedCurrency(updatedCurrency);
-                }
-
-                return updatedCurrency;
+    const filteredData = currencyData
+        .filter((currency) => currency.currency.toLowerCase() !== 'update_date')
+        .filter((currency) => {
+            const changeValue = currency.change;
+            if (filterOption === 'rising') {
+                return !changeValue.includes('-');
+            } else if (filterOption === 'falling') {
+                return changeValue.includes('-');
             }
-            return currency;
+            return true;
         });
 
-        // Güncellenmiş döviz verisini setCurrencyData ile güncelle
-        setCurrencyData(updatedCurrencyData);
-    };
+    const sortedData = filteredData
+        .sort((a, b) => {
+            const changeA = parseFloat(a.change);
+            const changeB = parseFloat(b.change);
 
-
-    const filteredData = currencyData.filter((currency) => currency.currency.toLowerCase() !== 'update_date');
-
-    const filteredAndSortedData = filteredData.filter((currency) => {
-        const changeValue = currency.change;
-        if (filterOption === 'rising') {
-            return !changeValue.includes('-');
-        } else if (filterOption === 'falling') {
-            return changeValue.includes('-');
-        }
-        return true;
-    });
-
-    const sortedData = filteredAndSortedData.sort((a, b) => {
-        const changeA = parseFloat(a.change);
-        const changeB = parseFloat(b.change);
-
-        if (sortOrder === 'asc') {
-            return changeA - changeB;
-        } else {
-            return changeB - changeA;
-        }
-    });
+            if (sortOrder === 'asc') {
+                return changeA - changeB;
+            } else {
+                return changeB - changeA;
+            }
+        });
 
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
     const currentItems = sortedData.slice(indexOfFirstItem, indexOfLastItem);
-    const totalPages = sortedData.length > 0 ? Math.ceil(sortedData.length / itemsPerPage) : 0;
 
     const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
@@ -168,26 +118,27 @@ const Forex4 = () => {
 
     const rowsToRenderUpperTable = currentItems.map((currency, index) => {
         const numericChange = parseFloat(currency.change);
+        // Check if the currency is starred
+        const isCurrencyStarred = selectedCurrencies.some(selectedCurrency => selectedCurrency.currency === currency.currency && selectedCurrency.isStarred);
+
+        // Add a class based on isStarred value
+        // const rowClass = isCurrencyStarred ? 'bg-yellow-200' : '';
 
         return (
             <tr
                 key={`${currency.currency}-${index}`}
-                className={'cursor-pointer duration-300 hover:bg-gray-500'}
-                style={{
-                    backgroundColor: 'white',
-                    color: 'gray.800',
-                }}
+                className={`cursor-pointer duration-300 ${hoveredRow === index ? 'bg-gray-300' : ''}`}
                 onMouseEnter={() => handleRowHover(index)}
                 onMouseLeave={() => handleRowHover(null)}
             >
                 <td className="py-0.5 px-4 border-b text-center text-sm" style={{ display: 'flex', alignItems: 'center' }}>
                     <div className="flex items-center justify-center">
                         <button
-                            className="text-lg font-semibold p-2 rounded-md ml-2"
+                            className={`text-lg font-semibold p-2 rounded-md ml-2 ${isCurrencyStarred ? 'text-black' : ''}`}
                             style={{ width: '30px', height: '30px', lineHeight: '1' }}
                             onClick={() => handleActionClick(currency)}
                         >
-                            {currency.isStarred ? '★' : '☆'}
+                            {isCurrencyStarred ? '★' : '☆'}
                         </button>
                     </div>
                 </td>
@@ -208,18 +159,13 @@ const Forex4 = () => {
     });
 
     const rowsToRenderLowerTable = selectedCurrencies.length > 0 ? selectedCurrencies
-        // .filter(currency => !isNaN(parseFloat(currency.change))) // Nan değerleri filtrele
         .map((currency, index) => {
             const numericChange = parseFloat(currency.change);
 
             return (
                 <tr
                     key={index}
-                    className="cursor-pointer duration-300 hover:bg-gray-500"
-                    style={{
-                        backgroundColor: 'white',
-                        color: 'gray.400',
-                    }}
+                    className="cursor-pointer duration-300 hover:bg-gray-300"
                 >
                     <td className="py-0.5 px-4 border-b text-center text-sm">
                         <button
@@ -243,6 +189,83 @@ const Forex4 = () => {
             );
         }) : [];
 
+
+    const handleActionClick = (clickedCurrency) => {
+        const updatedCurrencyData = currencyData.map((currency) => {
+            if (currency.currency === clickedCurrency.currency) {
+                const updatedCurrency = {
+                    ...currency,
+                    isStarred: !currency.isStarred,
+                };
+
+                if (updatedCurrency.isStarred) {
+                    addSelectedCurrency(updatedCurrency);
+                } else {
+                    removeSelectedCurrency(updatedCurrency);
+                }
+
+                return updatedCurrency;
+            }
+            return currency;
+        });
+
+        setCurrencyData(updatedCurrencyData);
+        saveSelectedCurrenciesToCookie(updatedCurrencyData);
+    };
+
+
+    const saveSelectedCurrenciesToCookie = (updatedCurrencyData) => {
+        const selectedCurrenciesToSave = updatedCurrencyData.filter(currency => currency.isStarred);
+        Cookies.set('selectedCurrencies', JSON.stringify(selectedCurrenciesToSave));
+        console.log('Cookie updated:', selectedCurrenciesToSave);
+    };
+
+
+
+    const loadSelectedCurrenciesFromCookie = () => {
+        const storedSelectedCurrencies = Cookies.get('selectedCurrencies');
+
+        if (storedSelectedCurrencies) {
+            const parsedSelectedCurrencies = JSON.parse(storedSelectedCurrencies);
+
+            parsedSelectedCurrencies.forEach((currency) => {
+                const currencySymbol = currency.currency;
+                const isStarred = currency.isStarred;
+
+                // Eğer currencyData'da bu para birimi varsa ve yıldız durumu eşleşmiyorsa güncelle
+                if (currencySymbolsSet.has(currencySymbol)) {
+                    const updatedCurrencyData = currencyData.map((dataCurrency) => {
+                        if (dataCurrency.currency === currencySymbol) {
+                            return {
+                                ...dataCurrency,
+                                isStarred: isStarred,
+                            };
+                        }
+                        return dataCurrency;
+                    });
+
+                    setCurrencyData(updatedCurrencyData);
+                }
+
+                if (isStarred) {
+                    addSelectedCurrency(currency);
+                } else {
+                    removeSelectedCurrency(currency);
+                }
+            });
+
+            setCurrencyData((prevData) => [...prevData]);
+        }
+    };
+
+
+
+    useEffect(() => {
+        fetchData(); // Currency datayı güncelle
+        loadSelectedCurrenciesFromCookie(); // Sayfa yüklendiğinde cookie'den seçili dövizleri al
+
+
+    }, []);
 
 
     return (
@@ -276,7 +299,7 @@ const Forex4 = () => {
 
                 <div className="mb-4"></div>
                 <div className="max-w-full overflow-x-auto">
-                    <table className="min-w-full border-gray-200 rounded-lg  hover:bg-gray-500 overflow-hidden text-center text-sm font-semibold">
+                    <table className="min-w-full border-gray-200 rounded-lg overflow-hidden text-center text-sm font-semibold">
                         <thead className="bg-gray-300">
                             <tr>
                                 <th className="py-2 px-4 border-b" style={{ width: '50px' }}></th>
@@ -310,7 +333,6 @@ const Forex4 = () => {
                 </div>
             </div>
 
-
             <div className="mb-4 mt-4">
                 <h1 className="font-bold text-lg">Takip Listem</h1>
                 <table className="text-center text-sm font-semibold bg-white min-w-full border border-gray-200 rounded-lg overflow-hidden">
@@ -328,7 +350,6 @@ const Forex4 = () => {
                     </tbody>
                 </table>
             </div>
-
         </div>
     );
 };

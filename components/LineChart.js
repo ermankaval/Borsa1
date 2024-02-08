@@ -17,6 +17,7 @@ const LineChart = ({ currencyKey, rate, change }) => {
                 // pointRadius: 1,
             },
         ],
+
     });
 
     useEffect(() => {
@@ -96,6 +97,7 @@ const LineChart = ({ currencyKey, rate, change }) => {
                 data: chartData,
                 options: {
                     responsive: true,
+                    maintainAspectRatio: false,
                     plugins: {
                         legend: {
                             display: false,

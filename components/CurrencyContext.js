@@ -30,19 +30,8 @@ const reducer = (state, action) => {
 const CurrencyProvider = ({ children }) => {
     const [state, dispatch] = useReducer(reducer, initialState);
 
-    // localStorage'den seçili para birimleri yükleniyor
     useEffect(() => {
-        const savedCurrencies = JSON.parse(localStorage.getItem('selectedCurrencies'));
-
-        if (savedCurrencies) {
-            // Nan değerlere sahip olanları filtrele
-            const filteredCurrencies = savedCurrencies.filter(currency => !isNaN(parseFloat(currency.change)));
-
-            dispatch({ type: 'SET_SELECTED_CURRENCIES', payload: filteredCurrencies });
-        }
-    }, []);
-
-    useEffect(() => {
+        // console.log('Context:', state.selectedCurrencies);
         localStorage.setItem('selectedCurrencies', JSON.stringify(state.selectedCurrencies));
     }, [state.selectedCurrencies]);
 
@@ -67,7 +56,6 @@ const CurrencyProvider = ({ children }) => {
         </CurrencyContext.Provider>
     );
 };
-
 
 const useCurrencyContext = () => {
     const context = useContext(CurrencyContext);

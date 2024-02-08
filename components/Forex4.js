@@ -12,6 +12,7 @@ const Forex4 = () => {
     const [currencyData, setCurrencyData] = useState([]);
     const { selectedCurrencies = [], addSelectedCurrency, removeSelectedCurrency } = useCurrencyContext();
     const currencySymbolsSet = new Set(currencyData.map(currency => currency.currency));
+    const [initialLoad, setInitialLoad] = useState(true);
 
     const fetchData = async () => {
         try {
@@ -51,7 +52,7 @@ const Forex4 = () => {
                     })
                     .filter(currency => currency !== null && !isNaN(parseFloat(currency.change)));
 
-                setCurrencyData(data || []);
+                return data || [];
             } else {
                 console.error('Invalid response format or missing data');
             }
@@ -61,9 +62,62 @@ const Forex4 = () => {
     };
 
     useEffect(() => {
-        fetchData();
+        fetchData().then((data) => {
+            setCurrencyData(data);
+            loadSelectedCurrenciesFromCookie();
+        });
     }, []);
 
+    useEffect(() => {
+        if (!initialLoad) {
+            saveSelectedCurrenciesToCookie();
+        }
+    }, [selectedCurrencies, initialLoad]);
+
+
+    const updateCurrencyDataAndState = async (clickedCurrency) => {
+        if (!currencyData) {
+            console.error('currencyData is undefined.');
+            return;
+        }
+
+        const updatedCurrencyData = currencyData.map((currency) => {
+            if (currency.currency === clickedCurrency.currency) {
+                const updatedCurrency = {
+                    ...currency,
+                    isStarred: !currency.isStarred,
+                };
+
+                if (updatedCurrency.isStarred) {
+                    addSelectedCurrency(updatedCurrency);
+                } else {
+                    removeSelectedCurrency(updatedCurrency);
+                }
+
+                return updatedCurrency;
+            }
+            return currency;
+        });
+
+        await setCurrencyData(updatedCurrencyData);
+        saveSelectedCurrenciesToCookie(updatedCurrencyData); // Buradaki hatayı düzelttim
+    };
+
+    const handleActionClick = async (clickedCurrency) => {
+        await updateCurrencyDataAndState(clickedCurrency);
+    };
+
+
+    const saveSelectedCurrenciesToCookie = async (updatedCurrencyData) => {
+        if (!updatedCurrencyData) {
+            console.error('updatedCurrencyData is undefined.');
+            return;
+        }
+
+        const starredCurrenciesData = updatedCurrencyData.filter(currency => currency.isStarred);
+        Cookies.set('selectedCurrencies', JSON.stringify(starredCurrenciesData));
+        console.log('Cookie updated:', starredCurrenciesData);
+    };
 
 
 
@@ -118,11 +172,7 @@ const Forex4 = () => {
 
     const rowsToRenderUpperTable = currentItems.map((currency, index) => {
         const numericChange = parseFloat(currency.change);
-        // Check if the currency is starred
         const isCurrencyStarred = selectedCurrencies.some(selectedCurrency => selectedCurrency.currency === currency.currency && selectedCurrency.isStarred);
-
-        // Add a class based on isStarred value
-        // const rowClass = isCurrencyStarred ? 'bg-yellow-200' : '';
 
         return (
             <tr
@@ -159,9 +209,10 @@ const Forex4 = () => {
     });
 
     const rowsToRenderLowerTable = selectedCurrencies.length > 0 ? selectedCurrencies
+
         .map((currency, index) => {
             const numericChange = parseFloat(currency.change);
-
+            // const isCurrencyStarred = selectedCurrencies.some(selectedCurrency => selectedCurrency.currency === currency.currency && selectedCurrency.isStarred);
             return (
                 <tr
                     key={index}
@@ -169,10 +220,11 @@ const Forex4 = () => {
                 >
                     <td className="py-0.5 px-4 border-b text-center text-sm">
                         <button
-                            className={"text-lg font-semibold p-2 rounded-md ml-2"}
+                            className={`text-lg font-semibold p-2 rounded-md ml-2 text-black`}
+                            style={{ width: '30px', height: '30px', lineHeight: '1' }}
                             onClick={() => handleActionClick(currency)}
                         >
-                            {currency.isStarred ? '★' : '☆'}
+                            ★
                         </button>
                     </td>
                     <td className="py-0.5 px-4 border-b text-center text-sm font-bold">{currency.currency}</td>
@@ -190,83 +242,55 @@ const Forex4 = () => {
         }) : [];
 
 
-    const handleActionClick = (clickedCurrency) => {
-        const updatedCurrencyData = currencyData.map((currency) => {
-            if (currency.currency === clickedCurrency.currency) {
-                const updatedCurrency = {
-                    ...currency,
-                    isStarred: !currency.isStarred,
-                };
-
-                if (updatedCurrency.isStarred) {
-                    addSelectedCurrency(updatedCurrency);
-                } else {
-                    removeSelectedCurrency(updatedCurrency);
-                }
-
-                return updatedCurrency;
-            }
-            return currency;
-        });
-
-        setCurrencyData(updatedCurrencyData);
-        saveSelectedCurrenciesToCookie(updatedCurrencyData);
-    };
-
-
-    const saveSelectedCurrenciesToCookie = (updatedCurrencyData) => {
-        const selectedCurrenciesToSave = updatedCurrencyData.filter(currency => currency.isStarred);
-        Cookies.set('selectedCurrencies', JSON.stringify(selectedCurrenciesToSave));
-        console.log('Cookie updated:', selectedCurrenciesToSave);
-    };
-
-
-
     const loadSelectedCurrenciesFromCookie = () => {
-        const storedSelectedCurrencies = Cookies.get('selectedCurrencies');
+        if (initialLoad) {
+            const storedSelectedCurrencies = Cookies.get('selectedCurrencies');
 
-        if (storedSelectedCurrencies) {
-            const parsedSelectedCurrencies = JSON.parse(storedSelectedCurrencies);
+            if (storedSelectedCurrencies) {
+                const parsedSelectedCurrencies = JSON.parse(storedSelectedCurrencies);
 
-            parsedSelectedCurrencies.forEach((currency) => {
-                const currencySymbol = currency.currency;
-                const isStarred = currency.isStarred;
+                parsedSelectedCurrencies.forEach((currency) => {
+                    const currencySymbol = currency.currency;
+                    const isStarred = currency.isStarred;
 
-                // Eğer currencyData'da bu para birimi varsa ve yıldız durumu eşleşmiyorsa güncelle
-                if (currencySymbolsSet.has(currencySymbol)) {
-                    const updatedCurrencyData = currencyData.map((dataCurrency) => {
-                        if (dataCurrency.currency === currencySymbol) {
-                            return {
-                                ...dataCurrency,
-                                isStarred: isStarred,
-                            };
+                    // console.log(`Currency: ${currencySymbol}, isStarred: ${isStarred}`);
+
+                    // Check if the currency is already in selectedCurrencies
+                    const isCurrencyAlreadySelected = selectedCurrencies.some((selectedCurrency) =>
+                        selectedCurrency.currency === currencySymbol
+                    );
+
+                    // console.log(`Is currency already selected? ${isCurrencyAlreadySelected}`);
+
+                    if (currencySymbolsSet.has(currencySymbol) && !isCurrencyAlreadySelected) {
+                        const updatedCurrencyData = currencyData.map((dataCurrency) => {
+                            if (dataCurrency.currency === currencySymbol) {
+                                return {
+                                    ...dataCurrency,
+                                    isStarred: isStarred,
+                                };
+                            }
+                            return dataCurrency;
+                        });
+
+                        setCurrencyData(updatedCurrencyData);
+                    }
+
+                    if (!isCurrencyAlreadySelected) {
+                        if (isStarred) {
+                            addSelectedCurrency(currency);
+                        } else {
+                            removeSelectedCurrency(currency);
                         }
-                        return dataCurrency;
-                    });
+                    }
+                });
 
-                    setCurrencyData(updatedCurrencyData);
-                }
+                setCurrencyData((prevData) => [...prevData]);
+            }
 
-                if (isStarred) {
-                    addSelectedCurrency(currency);
-                } else {
-                    removeSelectedCurrency(currency);
-                }
-            });
-
-            setCurrencyData((prevData) => [...prevData]);
+            // setInitialLoad(false);
         }
     };
-
-
-
-    useEffect(() => {
-        fetchData(); // Currency datayı güncelle
-        loadSelectedCurrenciesFromCookie(); // Sayfa yüklendiğinde cookie'den seçili dövizleri al
-
-
-    }, []);
-
 
     return (
         <div className="container mx-auto mt-2 h-screen w-full lg:w-full">

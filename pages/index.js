@@ -3,8 +3,9 @@ import React from 'react';
 import Head from 'next/head';
 import Navbar from '@/components/Navbar';
 import Forex3 from '@/components/Forex3';
-import Forex4 from '@/components/Forex4';
+import Forex5 from '@/components/Forex5';
 import Counter from '../components/Counter';
+import Button from '@/components/button';
 
 const Home = () => {
   return (
@@ -19,8 +20,9 @@ const Home = () => {
         <Navbar />
         <div className="p-5 mt-20">
           <Counter />
-          <Forex3 />
-          <Forex4 />
+          <Button />
+          {/* <Forex3 /> */}
+          <Forex5 />
         </div>
       </div>
     </>

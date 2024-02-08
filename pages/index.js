@@ -19,9 +19,9 @@ const Home = () => {
       <div className="mx-auto">
         <Navbar />
         <div className="p-5 mt-20">
-          <Counter />
-          <Button />
-          {/* <Forex3 /> */}
+          {/* <Counter /> */}
+          {/* <Button /> */}
+          <Forex3 />
           <Forex5 />
         </div>
       </div>

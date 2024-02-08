@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import Pagination from './Pagination';
 
 const Forex5 = () => {
     const [forexData, setForexData] = useState([]);
     const [selectedRows, setSelectedRows] = useState([]);
+    const [currentPageTop, setCurrentPageTop] = useState(1);
+    const [perPage, setPerPage] = useState(10);
+
+
 
     useEffect(() => {
         const fetchData = async () => {
@@ -41,7 +46,7 @@ const Forex5 = () => {
                                 return null;
                             }
                         })
-                        .filter(currency => currency !== null && !isNaN(parseFloat(currency.change)));
+                        .filter((currency) => currency !== null && !isNaN(parseFloat(currency.change)));
 
                     setForexData(data || []);
                 } else {
@@ -95,61 +100,116 @@ const Forex5 = () => {
         localStorage.setItem('selectedRows', JSON.stringify(updatedSelectedRows));
     };
 
+    const getTriangleColor = (change) => {
+        const changeValue = parseFloat(change);
+
+        if (changeValue > 0) {
+            return 'text-green-500'; // Yeşil üçgen yukarı bakar
+        } else if (changeValue < 0) {
+            return 'text-red-500'; // Kırmızı üçgen aşağı bakar
+        } else {
+            return 'text-blue-500'; // Mavi eşittir işareti
+        }
+    };
+
+    const handlePerPageChange = (e) => {
+        setPerPage(Number(e.target.value));
+        setCurrentPageTop(1);
+    };
+
+    const indexOfLastRow = currentPageTop * perPage;
+    const indexOfFirstRow = indexOfLastRow - perPage;
+    const currentRows = forexData.slice(indexOfFirstRow, indexOfLastRow);
+
+    const paginate = (pageNumber) => {
+        setCurrentPageTop(pageNumber);
+    };
+
     return (
         <div>
-            <table className="min-w-full bg-white border border-gray-300">
+            <div className="flex justify-start mb-4 mt-10">
+                <label className="mr-2 text-sm">Rows per page:</label>
+                <select
+                    value={perPage}
+                    onChange={handlePerPageChange}
+                    className="border p-2 rounded text-sm h-8"
+                >
+                    <option value={10}>10</option>
+                    <option value={20}>20</option>
+                    <option value={30}>30</option>
+                </select>
+            </div>
+
+            <table className="min-w-full bg-white border border-gray-300 rounded-lg overflow-hidden">
                 <thead>
                     <tr>
-                        <th className="py-2 px-4 border-b">Currency</th>
-                        <th className="py-2 px-4 border-b">Rate</th>
-                        <th className="py-2 px-4 border-b">Change</th>
+                        <th className="py-2 px-4 border-b text-left"></th>
+                        <th className="py-2 px-4 border-b text-left">Currency</th>
+                        <th className="py-2 px-4 border-b text-left">Rate</th>
+                        <th className="py-2 px-4 border-b text-left">Change (%)</th>
+                        <th className="py-2 px-4 border-b text-left"></th>
                     </tr>
                 </thead>
                 <tbody>
-                    {forexData.map((currency, index) => (
+                    {currentRows.map((currency, index) => (
                         <tr
                             key={currency.currency}
-                            className={`group ${index % 2 === 0 ? 'bg-gray-100' : 'bg-gray-200'} ${selectedRows.includes(index) ? 'bg-green-500' : ''
-                                }`}
-                            onClick={() => handleRowClick(index)}
+                            className={`group hover:bg-gray-300 ${index % 2 === 0 ? 'bg-gray-100' : 'bg-gray-200'} ${selectedRows.includes(indexOfFirstRow + index) ? 'selected-row' : ''}`}
+                            onClick={() => handleRowClick(indexOfFirstRow + index)}
                         >
-                            <td className="py-2 px-4 border-b group-hover:bg-gray-300">
-                                {currency.currency}
+                            <td className="py-2 px-4 border-b text-left">
+                                {selectedRows.includes(indexOfFirstRow + index) ? <span className="full-star"></span> : <span className="empty-star"></span>}
                             </td>
-                            <td className="py-2 px-4 border-b group-hover:bg-gray-300">{currency.rate}</td>
-                            <td className="py-2 px-4 border-b group-hover:bg-gray-300">{currency.change}</td>
+                            <td className="py-2 px-4 border-b text-left">{currency.currency}</td>
+                            <td className="py-2 px-4 border-b text-left">{currency.rate}</td>
+                            <td className={`py-2 px-4 border-b text-left font-bold ${parseFloat(currency.change) === 0 ? 'text-blue-500' : getTriangleColor(currency.change)}`}>
+                                {`% ${currency.change}`}
+                            </td>
+                            <td className={`py-2 px-4 border-b text-left ${getTriangleColor(currency.change)}`}>{parseFloat(currency.change) < 0 ? '▼' : parseFloat(currency.change) > 0 ? '▲' : '-'}</td>
                         </tr>
                     ))}
                 </tbody>
             </table>
 
+            <Pagination
+                perPage={perPage}
+                totalRows={forexData.length}
+                currentPage={currentPageTop}
+                paginate={setCurrentPageTop}
+            />
+
             {/* Selected Rows Table */}
-            <h2 className="mt-4 mb-2 text-lg font-semibold">Selected Rows</h2>
-            <table className="min-w-full bg-white border border-gray-300">
+            <h2 className="mt-4 mb-2 text-lg font-semibold">Takip Listem</h2>
+            <table className="min-w-full bg-white border border-gray-300 rounded-lg overflow-hidden">
                 <thead>
                     <tr>
-                        <th className="py-2 px-4 border-b">Currency</th>
-                        <th className="py-2 px-4 border-b">Rate</th>
-                        <th className="py-2 px-4 border-b">Change</th>
-                        <th className="py-2 px-4 border-b">Actions</th>
+                        <th className="py-2 px-4 border-b text-left"></th>
+                        <th className="py-2 px-4 border-b text-left">Currency</th>
+                        <th className="py-2 px-4 border-b text-left">Rate</th>
+                        <th className="py-2 px-4 border-b text-left">Change (%)</th>
+                        <th className="py-2 px-4 border-b text-left"></th>
                     </tr>
                 </thead>
                 <tbody>
-                    {selectedRows.map((selectedIndex) => {
+                    {selectedRows.map((selectedIndex, selectedRowIndex) => {
                         const selectedCurrency = forexData[selectedIndex];
 
                         if (selectedCurrency) {
                             return (
                                 <tr
                                     key={selectedCurrency.currency}
-                                    className="bg-green-500"
+                                    className={`hover:bg-gray-300 ${selectedRowIndex % 2 === 0 ? 'bg-gray-100' : 'bg-gray-200'}`}
+                                    onClick={() => handleRemoveClick(selectedIndex)}
                                 >
-                                    <td className="py-2 px-4 border-b">{selectedCurrency.currency}</td>
-                                    <td className="py-2 px-4 border-b">{selectedCurrency.rate}</td>
-                                    <td className="py-2 px-4 border-b">{selectedCurrency.change}</td>
-                                    <td className="py-2 px-4 border-b">
-                                        <button onClick={() => handleRemoveClick(selectedIndex)}>Remove</button>
+                                    <td className="py-2 px-4 border-b text-left">
+                                        {selectedRows.includes(selectedIndex) ? <span className="full-star"></span> : <span className="empty-star"></span>}
                                     </td>
+                                    <td className="py-2 px-4 border-b text-left">{selectedCurrency.currency}</td>
+                                    <td className="py-2 px-4 border-b text-left">{selectedCurrency.rate}</td>
+                                    <td className={`py-2 px-4 border-b text-left font-bold ${parseFloat(selectedCurrency.change) === 0 ? 'text-blue-500' : getTriangleColor(selectedCurrency.change)}`}>
+                                        {`% ${selectedCurrency.change}`}
+                                    </td>
+                                    <td className={`py-2 px-4 border-b text-left ${getTriangleColor(selectedCurrency.change)}`}>{parseFloat(selectedCurrency.change) < 0 ? '▼' : parseFloat(selectedCurrency.change) > 0 ? '▲' : '-'}</td>
                                 </tr>
                             );
                         }

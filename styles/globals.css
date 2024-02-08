@@ -68,3 +68,38 @@ table {
     color: #000;
 }
 
+@media only screen and (hover: none) {
+
+    /* Mobil ekranlarda hover olmadığında bu stil uygulanır */
+    .group:hover {
+        background-color: initial !important;
+        /* Varsayılan arka plan rengine geri döner */
+    }
+}
+
+
+
+.group:hover {
+    cursor: pointer;
+}
+
+
+/* global.css dosyası */
+.full-star::before {
+    content: '★';
+    font-size: 1.2em;
+    /* Yıldızları büyütmek için */
+}
+
+.empty-star::before {
+    content: '☆';
+    font-size: 1.2em;
+    /* Yıldızları büyütmek için */
+}
+
+.selected-row .full-star::before,
+.selected-row .empty-star::before {
+    color: inherit;
+    /* Seçilen satırlarda yıldız rengini korumak için */
+}
+

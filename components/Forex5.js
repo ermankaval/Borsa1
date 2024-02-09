@@ -121,9 +121,27 @@ const Forex5 = () => {
     const indexOfFirstRow = indexOfLastRow - perPage;
     const currentRows = forexData.slice(indexOfFirstRow, indexOfLastRow);
 
-    const paginate = (pageNumber) => {
-        setCurrentPageTop(pageNumber);
+
+    const [isDescending, setIsDescending] = useState(true);
+
+    const sortTableByChange = () => {
+        const sortedData = [...forexData];
+
+        sortedData.sort((a, b) => {
+            const changeA = parseFloat(a.change);
+            const changeB = parseFloat(b.change);
+
+            if (isDescending) {
+                return changeB - changeA;
+            } else {
+                return changeA - changeB;
+            }
+        });
+
+        setForexData(sortedData);
+        setIsDescending(!isDescending); // Sıralama yönünü değiştir
     };
+
 
     return (
         <div>
@@ -147,7 +165,15 @@ const Forex5 = () => {
                         <th className="py-2 px-4 border-b text-left">Currency</th>
                         <th className="py-2 px-4 border-b text-left">Rate</th>
                         <th className="py-2 px-4 border-b text-left">Change (%)</th>
-                        <th className="py-2 px-4 border-b text-left"></th>
+                        <th className="py-2 px-4 border-b text-left">
+                            {/* ▲/▼ tuşu */}
+                            <span
+                                className={`cursor-pointer text-black`}
+                                onClick={() => sortTableByChange()}
+                            >
+                                {isDescending ? '▼' : '▲'}
+                            </span>
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -155,9 +181,10 @@ const Forex5 = () => {
                         <tr
                             key={currency.currency}
                             className={`group hover:bg-gray-300 ${index % 2 === 0 ? 'bg-gray-100' : 'bg-gray-200'} ${selectedRows.includes(indexOfFirstRow + index) ? 'selected-row' : ''}`}
-                            onClick={() => handleRowClick(indexOfFirstRow + index)}
+
                         >
-                            <td className="py-2 px-4 border-b text-left">
+                            <td className="py-2 px-4 border-b text-left"
+                                onClick={() => handleRowClick(indexOfFirstRow + index)}>
                                 {selectedRows.includes(indexOfFirstRow + index) ? <span className="full-star"></span> : <span className="empty-star"></span>}
                             </td>
                             <td className="py-2 px-4 border-b text-left">{currency.currency}</td>
@@ -199,9 +226,10 @@ const Forex5 = () => {
                                 <tr
                                     key={selectedCurrency.currency}
                                     className={`hover:bg-gray-300 ${selectedRowIndex % 2 === 0 ? 'bg-gray-100' : 'bg-gray-200'}`}
-                                    onClick={() => handleRemoveClick(selectedIndex)}
+
                                 >
-                                    <td className="py-2 px-4 border-b text-left">
+                                    <td className="py-2 px-4 border-b text-left"
+                                        onClick={() => handleRemoveClick(selectedIndex)}>
                                         {selectedRows.includes(selectedIndex) ? <span className="full-star"></span> : <span className="empty-star"></span>}
                                     </td>
                                     <td className="py-2 px-4 border-b text-left">{selectedCurrency.currency}</td>

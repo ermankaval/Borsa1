@@ -6,6 +6,7 @@ import Forex3 from '@/components/Forex3';
 import Forex5 from '@/components/Forex5';
 import Counter from '../components/Counter';
 import Button from '@/components/button';
+import Kart from '@/components/3D_Kart';
 
 const Home = () => {
   return (
@@ -21,7 +22,8 @@ const Home = () => {
         <div className="p-5 mt-20">
           {/* <Counter /> */}
           {/* <Button /> */}
-          <Forex3 />
+          {/* <Forex3 /> */}
+          <Kart />
           <Forex5 />
         </div>
       </div>

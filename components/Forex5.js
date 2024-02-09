@@ -180,7 +180,7 @@ const Forex5 = () => {
                     {currentRows.map((currency, index) => (
                         <tr
                             key={currency.currency}
-                            className={`group hover:bg-gray-300 ${index % 2 === 0 ? 'bg-gray-100' : 'bg-gray-200'} ${selectedRows.includes(indexOfFirstRow + index) ? 'selected-row' : ''}`}
+                            className={`group hover:bg-gray-300 text-sm ${index % 2 === 0 ? 'bg-gray-100' : 'bg-gray-200'} ${selectedRows.includes(indexOfFirstRow + index) ? 'selected-row' : ''}`}
 
                         >
                             <td className="py-2 px-4 border-b text-left"
@@ -225,14 +225,14 @@ const Forex5 = () => {
                             return (
                                 <tr
                                     key={selectedCurrency.currency}
-                                    className={`hover:bg-gray-300 ${selectedRowIndex % 2 === 0 ? 'bg-gray-100' : 'bg-gray-200'}`}
+                                    className={`hover:bg-gray-300 text-sm ${selectedRowIndex % 2 === 0 ? 'bg-gray-100' : 'bg-gray-200'}`}
 
                                 >
                                     <td className="py-2 px-4 border-b text-left"
                                         onClick={() => handleRemoveClick(selectedIndex)}>
                                         {selectedRows.includes(selectedIndex) ? <span className="full-star"></span> : <span className="empty-star"></span>}
                                     </td>
-                                    <td className="py-2 px-4 border-b text-left">{selectedCurrency.currency}</td>
+                                    <td className="py-2 px-4 border-b font-sm text-left">{selectedCurrency.currency}</td>
                                     <td className="py-2 px-4 border-b text-left">{selectedCurrency.rate}</td>
                                     <td className={`py-2 px-4 border-b text-left font-bold ${parseFloat(selectedCurrency.change) === 0 ? 'text-blue-500' : getTriangleColor(selectedCurrency.change)}`}>
                                         {`% ${selectedCurrency.change}`}

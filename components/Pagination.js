@@ -12,8 +12,16 @@ const Pagination = ({ perPage, totalRows, currentPage, paginate }) => {
             <nav>
                 <ul className="pagination">
                     {pageNumbers.map(number => (
-                        <li key={number} className={`mr-2 inline-block ${number === currentPage ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-700 hover:bg-gray-400'} rounded-full`}>
-                            <button onClick={() => paginate(number)} className="px-4 py-2 focus:outline-none">
+                        <li key={number} className="mr-2 inline-block">
+                            <button
+                                onClick={() => paginate(number)}
+                                className={`px-3 py-1 focus:outline-none text-sm ${number === currentPage
+                                    ? 'bg-blue-500 text-white'
+                                    : 'bg-gray-300 text-gray-700 hover:bg-gray-400'
+                                    } rounded-full ${'sm:' + (number === currentPage ? 'text-white' : 'text-gray-700') +
+                                    ' md:' + (number === currentPage ? 'bg-blue-500' : 'bg-gray-300 hover:bg-gray-400')
+                                    }`}
+                            >
                                 {number}
                             </button>
                         </li>

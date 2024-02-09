@@ -68,7 +68,9 @@ const Kart = () => {
                     onChartToggle={() => handleChartToggle('USD')}
                     isSelected={selectedCurrency === 'USD'}
                     isClicked={selectedCard === 'USD'}
+                    setSelectedCard={setSelectedCard}
                 />
+
                 <CurrencyCard
                     currency="EURO"
                     rate={eurTry.rate}
@@ -77,6 +79,7 @@ const Kart = () => {
                     onChartToggle={() => handleChartToggle('EUR')}
                     isSelected={selectedCurrency === 'EUR'}
                     isClicked={selectedCard === 'EUR'}
+                    setSelectedCard={setSelectedCard}
                 />
                 <CurrencyCard
                     currency="STERLIN"
@@ -86,6 +89,7 @@ const Kart = () => {
                     onChartToggle={() => handleChartToggle('GBP')}
                     isSelected={selectedCurrency === 'GBP'}
                     isClicked={selectedCard === 'GBP'}
+                    setSelectedCard={setSelectedCard}
                 />
                 <CurrencyCard
                     currency="ALTIN GR"
@@ -95,6 +99,7 @@ const Kart = () => {
                     onChartToggle={() => handleChartToggle('GLD')}
                     isSelected={selectedCurrency === 'GLD'}
                     isClicked={selectedCard === 'GLD'}
+                    setSelectedCard={setSelectedCard}
                 />
             </div>
             {isChartVisible && selectedCurrency && (
@@ -109,7 +114,7 @@ const Kart = () => {
     );
 };
 
-const CurrencyCard = ({ currency, rate, change, loading, onChartToggle, isSelected, isClicked }) => {
+const CurrencyCard = ({ currency, rate, change, loading, onChartToggle, isSelected, isClicked, setSelectedCard }) => {
     const arrowColor = change < 0 ? 'red' : 'green';
     const arrowSymbol = change < 0 ? '▼' : '▲';
     const percentageSymbol = change !== '' ? '%' : '';
@@ -118,16 +123,19 @@ const CurrencyCard = ({ currency, rate, change, loading, onChartToggle, isSelect
     const formattedChange = loading ? 'Loading...' : `${parseFloat(change).toFixed(2)}${percentageSymbol}`;
 
     const handleButtonClick = () => {
+        console.log('Button clicked!');
         onChartToggle();
+        setSelectedCard(null);
     };
 
     const buttonClass = isSelected ? 'bg-green-500' : 'bg-blue-500';
 
     return (
         <div
-            className={`mx-auto z-20 flex-shrink-0 w-[calc(25%-16px)] p-2 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 text-center flex flex-col justify-between items-center ${isSelected ? 'border-blue-500' : ''}`}
+            className={`mx-auto z-20 flex-shrink-0 p-2 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 text-center flex flex-col justify-between items-center ${isSelected ? 'border-blue-500' : ''}`}
             style={{
-                transform: isClicked ? 'translateY(-10px) scale(1.02)' : 'translateY(0)',
+                width: 'calc(25% - 16px)', // Adjust the width as needed
+                transform: isSelected ? 'translateY(-10px) scale(1.05)' : 'translateY(0)',
                 boxShadow: isSelected ? '0 12px 24px rgba(0, 0, 0, 0.2)' : '',
             }}
         >

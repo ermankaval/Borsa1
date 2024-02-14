@@ -5,7 +5,9 @@ import Link from 'next/link';
 import { BiMenu } from 'react-icons/bi';
 import Logo from './Logo';
 import { CurrencyProvider, useCurrencyContext } from './CurrencyContext';
-import { useNavigate } from 'react-router-dom';
+// import { useNavigate } from 'react-router-dom';
+import { signOut } from "next-auth/react";
+import Image from "next/image";
 
 const Navbar = () => {
     const { selectedCurrenciesCount } = useCurrencyContext();
@@ -55,6 +57,22 @@ const Navbar = () => {
                                 </span>
                             </Link>
                         </li>
+                        <li className='headerLink'>
+                            <Link href="/favorites">
+                                <span className={`text-white ${scrolled ? 'hover:text-gray-300' : 'hover:text-gray-800'}`}
+                                    onClick={() => signOut()}>
+                                    Log Out
+                                </span>
+                            </Link>
+                        </li>
+                        {/* <Image
+                            src="/EK.png"
+                            alt="dp"
+                            width={60}
+                            height={60}
+                            className="cursor-pointer rounded w-auto h-auto"
+                            onClick={() => signOut()}
+                        /> */}
                     </ul>
                     <div className="md:hidden" style={{ marginRight: '20px' }}>
                         <button

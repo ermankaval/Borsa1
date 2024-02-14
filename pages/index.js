@@ -5,7 +5,7 @@ import Navbar from '@/components/Navbar';
 import Forex5 from '@/components/Forex5';
 import Kart from '@/components/3D_Kart';
 import { getSession, useSession } from 'next-auth/react';
-import Login from '@/components/login';
+import Login from '@/components/Login';
 
 export default function Home() {
   try {

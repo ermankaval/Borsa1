@@ -58,12 +58,12 @@ const Navbar = () => {
                             </Link>
                         </li>
                         <li className='headerLink'>
-                            <Link href="/favorites">
-                                <span className={`text-white ${scrolled ? 'hover:text-gray-300' : 'hover:text-gray-800'}`}
-                                    onClick={() => signOut()}>
-                                    Log Out
-                                </span>
-                            </Link>
+
+                            <span className={`text-white ${scrolled ? 'hover:text-gray-300' : 'hover:text-gray-800'}`}
+                                onClick={() => signOut()}>
+                                Log Out
+                            </span>
+
                         </li>
                         {/* <Image
                             src="/EK.png"
@@ -106,6 +106,14 @@ const Navbar = () => {
                                     Takip Listem ({selectedCurrenciesCount ? selectedCurrenciesCount : 0})
                                 </span>
                             </Link>
+                        </li>
+                        <li className='headerLink'>
+
+                            <span className={`text-white ${scrolled ? 'hover:text-gray-300' : 'hover:text-gray-800'}`}
+                                onClick={() => signOut()}>
+                                Log Out
+                            </span>
+
                         </li>
                     </ul>
                 </div>

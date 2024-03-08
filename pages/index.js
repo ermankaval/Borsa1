@@ -1,13 +1,30 @@
 // pages/index.js
-import React from 'react';
+import React, { useEffect } from 'react';
 import Head from 'next/head';
 import Navbar from '@/components/Navbar';
 import Forex3 from '@/components/Forex3';
 import Forex5 from '@/components/Forex5';
-import Counter from '../components/Counter';
-import Button from '@/components/button';
+import { useRouter } from 'next/router';
+import { onAuthStateChanged, getAuth, signOut } from 'firebase/auth';
+
 
 const Home = () => {
+  const router = useRouter();
+  const auth = getAuth();
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        router.push('/login');
+      } else {
+        router.push('/');
+      }
+    });
+
+
+    return () => unsubscribe(); // Cleanup the subscription on component unmount
+  }, []);
+
   return (
     <>
       <Head>
@@ -19,6 +36,7 @@ const Home = () => {
       <div className="mx-auto">
         <Navbar />
         <div className="p-5 mt-20">
+          {/* Your existing components */}
           {/* <Counter /> */}
           {/* <Button /> */}
           <Forex3 />
@@ -28,6 +46,5 @@ const Home = () => {
     </>
   );
 };
-
 
 export default Home;

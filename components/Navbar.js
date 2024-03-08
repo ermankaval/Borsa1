@@ -68,6 +68,9 @@ const Navbar = () => {
                                 </span>
                             </Link>
                         </li>
+                        <li onClick={() => { setIsMobileMenuOpen(false); handleLogout(); }}>
+                            <span className={`text-white ${scrolled ? 'hover:text-gray-300' : 'hover:text-gray-800'}`}>Logout</span>
+                        </li>
                     </ul>
                     <div className="md:hidden" style={{ marginRight: '20px' }}>
                         <button

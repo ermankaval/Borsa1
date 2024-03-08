@@ -96,21 +96,9 @@ const Forex5 = () => {
         }
     };
 
-    // const handleRemoveClick = async (index) => {
-    //     const updatedSelectedRows = [...selectedRows];
 
-    //     // Remove the selected index from the array
-    //     const selectedIndex = updatedSelectedRows.indexOf(index);
-    //     if (selectedIndex !== -1) {
-    //         updatedSelectedRows.splice(selectedIndex, 1);
-    //     }
 
-    //     setSelectedRows(updatedSelectedRows);
 
-    //     // Save selected rows to localStorage
-    //     localStorage.setItem('selectedRows', JSON.stringify(updatedSelectedRows));
-    //     await removeFavoriteFromFirestore(index);
-    // };
 
     const getTriangleColor = (change) => {
         const changeValue = parseFloat(change);
@@ -128,6 +116,24 @@ const Forex5 = () => {
         setPerPage(Number(e.target.value));
         setCurrentPageTop(1);
     };
+
+    const loadFavoritesFromFirestore = async () => {
+        const data = [];
+        try {
+            const userId = auth.currentUser.uid; // Get the userId of the logged-in user
+            const querySnapshot = await getDocs(collection(db, 'forex'), where('userId', '==', userId));
+
+            querySnapshot.forEach((doc) => {
+                data.push({ id: doc.id, ...doc.data() });
+            });
+
+            return data;
+        } catch (error) {
+            console.error('Error getting Firestore data:', error);
+            throw error;
+        }
+    };
+
 
     const removeFavoriteFromFirestore = async (index) => {
         try {

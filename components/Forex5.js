@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Pagination from './Pagination';
-import { getFirestore, doc, setDoc, getDocs, collection } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, addDoc, getDocs, collection, deleteDoc } from 'firebase/firestore';
 import { db, auth } from '../components/firebase';
 
 
@@ -69,7 +69,7 @@ const Forex5 = () => {
         setSelectedRows(storedSelectedRows);
     }, []);
 
-    const handleRowClick = (index) => {
+    const handleRowClick = async (index) => {
         const updatedSelectedRows = [...selectedRows];
 
         const selectedIndex = updatedSelectedRows.indexOf(index);
@@ -80,30 +80,37 @@ const Forex5 = () => {
         } else {
             // If already selected, remove from the array
             updatedSelectedRows.splice(selectedIndex, 1);
+            console.log("silme isteği")
+            // Remove from Firestore
+            await removeFavoriteFromFirestore(index);
         }
 
         setSelectedRows(updatedSelectedRows);
 
         // Save selected rows to localStorage
         localStorage.setItem('selectedRows', JSON.stringify(updatedSelectedRows));
-        saveFavoritesToFirestore(); // Save favorites to Firestore
-    };
 
-    const handleRemoveClick = (index) => {
-        const updatedSelectedRows = [...selectedRows];
-
-        // Remove the selected index from the array
-        const selectedIndex = updatedSelectedRows.indexOf(index);
-        if (selectedIndex !== -1) {
-            updatedSelectedRows.splice(selectedIndex, 1);
+        // Save or remove favorites to/from Firestore
+        if (selectedIndex === -1) {
+            await saveFavoritesToFirestore(index);
         }
-
-        setSelectedRows(updatedSelectedRows);
-
-        // Save selected rows to localStorage
-        localStorage.setItem('selectedRows', JSON.stringify(updatedSelectedRows));
-        saveFavoritesToFirestore(); // Save favorites to Firestore
     };
+
+    // const handleRemoveClick = async (index) => {
+    //     const updatedSelectedRows = [...selectedRows];
+
+    //     // Remove the selected index from the array
+    //     const selectedIndex = updatedSelectedRows.indexOf(index);
+    //     if (selectedIndex !== -1) {
+    //         updatedSelectedRows.splice(selectedIndex, 1);
+    //     }
+
+    //     setSelectedRows(updatedSelectedRows);
+
+    //     // Save selected rows to localStorage
+    //     localStorage.setItem('selectedRows', JSON.stringify(updatedSelectedRows));
+    //     await removeFavoriteFromFirestore(index);
+    // };
 
     const getTriangleColor = (change) => {
         const changeValue = parseFloat(change);
@@ -122,40 +129,50 @@ const Forex5 = () => {
         setCurrentPageTop(1);
     };
 
-    useEffect(() => {
-        const db = getFirestore();
-
-
-        const loadFavoritesFromFirestore = async () => {
-            const data = [];
-            try {
-                const querySnapshot = await getDocs(collection(db, 'forex'));
-
-                querySnapshot.forEach((doc) => {
-                    data.push({ id: doc.id, ...doc.data() });
-                });
-                return data;
-            } catch (error) {
-                console.error('Error getting Firestore data:', error);
-                throw error;
-            }
-        };
-
-    }, [auth.currentUser]); // Make sure to add any dependencies if needed
-
-    const saveFavoritesToFirestore = async (data) => {
+    const removeFavoriteFromFirestore = async (index) => {
         try {
-            console.log(auth.currentUser.uid)
-            const querySnapshot = await getDocs(collection(db, 'forex'));
-            querySnapshot.forEach((doc) => {
-                data.push({ id: doc.id, ...doc.data() });
-            });
-            return data;
+            const db = getFirestore();
+            const collectionRef = collection(db, 'forex');
+            const selectedCurrency = forexData[indexOfFirstRow + index];
 
+            if (selectedCurrency) {
+                const querySnapshot = await getDocs(collectionRef);
+
+                querySnapshot.forEach(async (doc) => {
+                    const data = doc.data();
+                    if (data.userId === auth.currentUser.uid && data.symbol === selectedCurrency.currency) {
+                        await deleteDoc(doc.ref);
+                        console.log('Document successfully deleted!');
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Error removing data from Firestore:', error);
+        }
+    };
+
+    const saveFavoritesToFirestore = async (index) => {
+        try {
+            const db = getFirestore();
+            const collectionRef = collection(db, 'forex');
+
+            const selectedCurrency = forexData[indexOfFirstRow + index];
+
+            if (selectedCurrency) {
+                const dataToSave = {
+                    userId: auth.currentUser.uid,
+                    symbol: selectedCurrency.currency,
+                    // Add other fields if needed
+                };
+
+                const docRef = await addDoc(collectionRef, dataToSave);
+                console.log('Document written with ID:', docRef.id);
+            }
         } catch (error) {
             console.error('Error saving data to Firestore:', error);
         }
     };
+
 
 
     const indexOfLastRow = currentPageTop * perPage;

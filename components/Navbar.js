@@ -1,13 +1,13 @@
 // Navbar.js
-import { useHistory } from 'react-router-dom';
+
 import React, { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { BiMenu } from 'react-icons/bi';
 import Logo from './Logo';
 import { CurrencyProvider, useCurrencyContext } from './CurrencyContext';
-import { useNavigate } from 'react-router-dom';
 import { useRouter } from 'next/router';
-import firebase from '../components/firebase';
+// import firebase from '../components/firebase';
+import { auth } from '../components/firebase';
 
 const Navbar = () => {
     const { selectedCurrenciesCount } = useCurrencyContext();
@@ -32,9 +32,9 @@ const Navbar = () => {
 
     const handleLogout = async () => {
         try {
-            await firebase.auth().signOut();
+            await auth.signOut();
+            router.push('/login');
             console.log('User signed out');
-            router.push('/'); // Redirect to home page after logout
         } catch (error) {
             console.error('Sign out error:', error.message);
         }
@@ -69,7 +69,7 @@ const Navbar = () => {
                             </Link>
                         </li>
                         <li onClick={() => { setIsMobileMenuOpen(false); handleLogout(); }}>
-                            <span className={`text-white ${scrolled ? 'hover:text-gray-300' : 'hover:text-gray-800'}`}>Logout</span>
+                            <span className={`cursor-pointer text-white ${scrolled ? 'hover:text-gray-300' : 'hover:text-gray-800'}`}>Logout</span>
                         </li>
                     </ul>
                     <div className="md:hidden" style={{ marginRight: '20px' }}>
@@ -106,7 +106,7 @@ const Navbar = () => {
                             </Link>
                         </li>
                         <li onClick={() => { setIsMobileMenuOpen(false); handleLogout(); }}>
-                            <span className={`text-white ${scrolled ? 'hover:text-gray-300' : 'hover:text-gray-800'}`}>Logout</span>
+                            <span className={`cursor-pointer text-white ${scrolled ? 'hover:text-gray-300' : 'hover:text-gray-800'}`}>Logout</span>
                         </li>
                     </ul>
                 </div>

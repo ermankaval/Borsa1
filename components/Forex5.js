@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Pagination from './Pagination';
+import { getFirestore, doc, setDoc, getDocs, collection } from 'firebase/firestore';
+import { db, auth } from '../components/firebase';
+
 
 const Forex5 = () => {
     const [forexData, setForexData] = useState([]);
@@ -83,6 +86,7 @@ const Forex5 = () => {
 
         // Save selected rows to localStorage
         localStorage.setItem('selectedRows', JSON.stringify(updatedSelectedRows));
+        saveFavoritesToFirestore(); // Save favorites to Firestore
     };
 
     const handleRemoveClick = (index) => {
@@ -98,6 +102,7 @@ const Forex5 = () => {
 
         // Save selected rows to localStorage
         localStorage.setItem('selectedRows', JSON.stringify(updatedSelectedRows));
+        saveFavoritesToFirestore(); // Save favorites to Firestore
     };
 
     const getTriangleColor = (change) => {
@@ -116,6 +121,42 @@ const Forex5 = () => {
         setPerPage(Number(e.target.value));
         setCurrentPageTop(1);
     };
+
+    useEffect(() => {
+        const db = getFirestore();
+
+
+        const loadFavoritesFromFirestore = async () => {
+            const data = [];
+            try {
+                const querySnapshot = await getDocs(collection(db, 'forex'));
+
+                querySnapshot.forEach((doc) => {
+                    data.push({ id: doc.id, ...doc.data() });
+                });
+                return data;
+            } catch (error) {
+                console.error('Error getting Firestore data:', error);
+                throw error;
+            }
+        };
+
+    }, [auth.currentUser]); // Make sure to add any dependencies if needed
+
+    const saveFavoritesToFirestore = async (data) => {
+        try {
+            console.log(auth.currentUser.uid)
+            const querySnapshot = await getDocs(collection(db, 'forex'));
+            querySnapshot.forEach((doc) => {
+                data.push({ id: doc.id, ...doc.data() });
+            });
+            return data;
+
+        } catch (error) {
+            console.error('Error saving data to Firestore:', error);
+        }
+    };
+
 
     const indexOfLastRow = currentPageTop * perPage;
     const indexOfFirstRow = indexOfLastRow - perPage;

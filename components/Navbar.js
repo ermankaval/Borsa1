@@ -6,11 +6,14 @@ import { BiMenu } from 'react-icons/bi';
 import Logo from './Logo';
 import { CurrencyProvider, useCurrencyContext } from './CurrencyContext';
 import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/router';
+import firebase from '../components/firebase';
 
 const Navbar = () => {
     const { selectedCurrenciesCount } = useCurrencyContext();
     const [scrolled, setScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const router = useRouter();
 
     useEffect(() => {
         const handleScroll = () => {
@@ -26,6 +29,16 @@ const Navbar = () => {
             window.removeEventListener('scroll', handleScroll);
         };
     }, [scrolled]);
+
+    const handleLogout = async () => {
+        try {
+            await firebase.auth().signOut();
+            console.log('User signed out');
+            router.push('/'); // Redirect to home page after logout
+        } catch (error) {
+            console.error('Sign out error:', error.message);
+        }
+    };
 
     return (
         <CurrencyProvider>
@@ -88,6 +101,9 @@ const Navbar = () => {
                                     Takip Listem ({selectedCurrenciesCount ? selectedCurrenciesCount : 0})
                                 </span>
                             </Link>
+                        </li>
+                        <li onClick={() => { setIsMobileMenuOpen(false); handleLogout(); }}>
+                            <span className={`text-white ${scrolled ? 'hover:text-gray-300' : 'hover:text-gray-800'}`}>Logout</span>
                         </li>
                     </ul>
                 </div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Pagination from './Pagination';
-import { getFirestore, doc, setDoc, addDoc, getDocs, collection, deleteDoc } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, addDoc, getDocs, collection, deleteDoc, where, query } from 'firebase/firestore';
 import { db, auth } from '../components/firebase';
 
 
@@ -9,64 +9,130 @@ const Forex5 = () => {
     const [selectedRows, setSelectedRows] = useState([]);
     const [currentPageTop, setCurrentPageTop] = useState(1);
     const [perPage, setPerPage] = useState(10);
+    const [favorites, setFavorites] = useState([]);
 
+    const fetchData = async () => {
+        try {
+            const url = 'https://finans.truncgil.com/v4/today.json';
+            const options = {
+                method: 'GET',
+                headers: {},
+            };
 
+            const response = await fetch(url, options);
+            const result = await response.json();
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const url = 'https://finans.truncgil.com/v4/today.json';
-                const options = {
-                    method: 'GET',
-                    headers: {},
-                };
+            let data;
 
-                const response = await fetch(url, options);
-                const result = await response.json();
+            if (result && result['Update_Date']) {
+                data = Object.keys(result)
+                    .filter((currencyKey) => currencyKey.toLowerCase() !== 'update_date')
+                    .map((currencyKey) => {
+                        try {
+                            const selling = parseFloat(result[currencyKey].Selling);
+                            const change = parseFloat(result[currencyKey].Change);
 
-                let data;
-
-                if (result && result['Update_Date']) {
-                    data = Object.keys(result)
-                        .filter((currencyKey) => currencyKey.toLowerCase() !== 'update_date')
-                        .map((currencyKey) => {
-                            try {
-                                const selling = parseFloat(result[currencyKey].Selling);
-                                const change = parseFloat(result[currencyKey].Change);
-
-                                if (isNaN(selling) || isNaN(change)) {
-                                    return null;
-                                }
-
-                                return {
-                                    currency: currencyKey,
-                                    rate: selling.toFixed(2),
-                                    change: change.toFixed(2),
-                                    isStarred: false,
-                                };
-                            } catch (error) {
-                                console.error(`Error processing ${currencyKey}:`, error);
+                            if (isNaN(selling) || isNaN(change)) {
                                 return null;
                             }
-                        })
-                        .filter((currency) => currency !== null && !isNaN(parseFloat(currency.change)));
 
-                    setForexData(data || []);
-                } else {
-                    console.error('Invalid response format or missing data');
-                }
-            } catch (error) {
-                console.error(error);
+                            return {
+                                currency: currencyKey,
+                                rate: selling.toFixed(2),
+                                change: change.toFixed(2),
+                            };
+                        } catch (error) {
+                            console.error(`Error processing ${currencyKey}:`, error);
+                            return null;
+                        }
+                    })
+                    .filter((currency) => currency !== null && !isNaN(parseFloat(currency.change)));
+
+                setForexData(data || []);
+            } else {
+                console.error('Invalid response format or missing data');
             }
-        };
+        } catch (error) {
+            console.error(error);
+        }
+    };
 
-        fetchData();
-    }, []);
+
+
+    const loadFavoritesFromFirestore = async () => {
+        const data = [];
+        try {
+            const user = auth.currentUser;
+            if (user) {
+                const userId = user.uid;
+                const db = getFirestore(); // Firestore nesnesini alın
+                const favoritesCollectionRef = collection(db, 'forex'); // 'forex' koleksiyonunu seçiyoruz
+                const q = query(favoritesCollectionRef, where('userId', '==', userId)); // Kullanıcının favori dövizlerini almak için bir sorgu oluşturuyoruz
+
+                const querySnapshot = await getDocs(q); // Firestore'dan verileri alıyoruz
+                querySnapshot.forEach((doc) => {
+                    data.push({ id: doc.id, ...doc.data() });
+                });
+            } else {
+                console.error('User not logged in');
+            }
+            console.log('Favorites Data:', data);
+            return data;
+        } catch (error) {
+            console.error('Error getting Firestore data:', error);
+            throw error;
+        }
+    };
+
+
+
+    const initializeData = async () => {
+        try {
+            await fetchData();
+
+            const user = auth.currentUser;
+            // console.log(user)
+            if (user) {
+                const favoritesData = await loadFavoritesFromFirestore();
+                const selectedRows = favoritesData.map((favorite) => {
+                    const indexInCurrentPage = forexData.findIndex((currency) => currency.currency === favorite.symbol);
+                    return indexInCurrentPage + Math.floor(indexInCurrentPage / perPage);
+                });
+
+                // Güncellendi: Eğer sembol değeri tablodaki sembolle aynıysa, yıldızı işaretle
+                const updatedSelectedRows = [...selectedRows];
+                updatedSelectedRows.forEach((selectedIndex) => {
+                    const selectedCurrency = forexData[selectedIndex];
+                    if (selectedCurrency && favoritesData.some((favorite) => favorite.symbol === selectedCurrency.currency)) {
+                        const tableRowIndex = selectedIndex - (currentPageTop - 1) * perPage;
+                        if (tableRowIndex >= 0 && tableRowIndex < perPage) {
+                            const tableIndex = currentPageTop * perPage - perPage + tableRowIndex;
+                            if (!selectedRows.includes(tableIndex)) {
+                                selectedRows.push(tableIndex);
+                            }
+                        }
+                    }
+                });
+
+                setSelectedRows(selectedRows);
+            } else {
+                console.error('User not logged in');
+            }
+        } catch (error) {
+            console.error('Error initializing data:', error);
+        }
+    };
+
+
 
     useEffect(() => {
-        // Load selected rows from localStorage on component mount
-        const storedSelectedRows = JSON.parse(localStorage.getItem('selectedRows')) || [];
-        setSelectedRows(storedSelectedRows);
+        const unsubscribe = auth.onAuthStateChanged((user) => {
+            if (user) {
+                initializeData();
+            }
+        });
+
+        return unsubscribe;
     }, []);
 
     const handleRowClick = async (index) => {
@@ -77,26 +143,25 @@ const Forex5 = () => {
         if (selectedIndex === -1) {
             // If not already selected, add to the array
             updatedSelectedRows.push(index);
+
+            // Save selected rows to localStorage
+            localStorage.setItem('selectedRows', JSON.stringify(updatedSelectedRows));
+
+            // Save favorites to Firestore
+            await saveFavoritesToFirestore(index);
         } else {
             // If already selected, remove from the array
             updatedSelectedRows.splice(selectedIndex, 1);
-            console.log("silme isteği")
+
             // Remove from Firestore
             await removeFavoriteFromFirestore(index);
+
+            // Remove selected rows from localStorage
+            localStorage.setItem('selectedRows', JSON.stringify(updatedSelectedRows));
         }
 
         setSelectedRows(updatedSelectedRows);
-
-        // Save selected rows to localStorage
-        localStorage.setItem('selectedRows', JSON.stringify(updatedSelectedRows));
-
-        // Save or remove favorites to/from Firestore
-        if (selectedIndex === -1) {
-            await saveFavoritesToFirestore(index);
-        }
     };
-
-
 
 
 
@@ -117,29 +182,12 @@ const Forex5 = () => {
         setCurrentPageTop(1);
     };
 
-    const loadFavoritesFromFirestore = async () => {
-        const data = [];
-        try {
-            const userId = auth.currentUser.uid; // Get the userId of the logged-in user
-            const querySnapshot = await getDocs(collection(db, 'forex'), where('userId', '==', userId));
-
-            querySnapshot.forEach((doc) => {
-                data.push({ id: doc.id, ...doc.data() });
-            });
-
-            return data;
-        } catch (error) {
-            console.error('Error getting Firestore data:', error);
-            throw error;
-        }
-    };
-
 
     const removeFavoriteFromFirestore = async (index) => {
         try {
             const db = getFirestore();
             const collectionRef = collection(db, 'forex');
-            const selectedCurrency = forexData[indexOfFirstRow + index];
+            const selectedCurrency = forexData[index];
 
             if (selectedCurrency) {
                 const querySnapshot = await getDocs(collectionRef);
@@ -162,22 +210,35 @@ const Forex5 = () => {
             const db = getFirestore();
             const collectionRef = collection(db, 'forex');
 
-            const selectedCurrency = forexData[indexOfFirstRow + index];
+            const selectedCurrency = forexData[index];
 
             if (selectedCurrency) {
-                const dataToSave = {
-                    userId: auth.currentUser.uid,
-                    symbol: selectedCurrency.currency,
-                    // Add other fields if needed
-                };
+                const symbolToCheck = selectedCurrency.currency;
+                const userId = auth.currentUser.uid;
 
-                const docRef = await addDoc(collectionRef, dataToSave);
-                console.log('Document written with ID:', docRef.id);
+                // Check if the document with the same symbol and user already exists
+                const querySnapshot = await getDocs(query(collectionRef, where('symbol', '==', symbolToCheck), where('userId', '==', userId)));
+
+                if (querySnapshot.empty) {
+                    const dataToSave = {
+                        userId: userId,
+                        symbol: symbolToCheck,
+                        // Add other fields if needed
+                    };
+
+                    const docRef = await addDoc(collectionRef, dataToSave);
+                    console.log('Document written with ID:', docRef.id);
+                } else {
+                    console.log('Document with the same symbol and user already exists.');
+                }
             }
         } catch (error) {
             console.error('Error saving data to Firestore:', error);
         }
     };
+
+
+
 
 
 
@@ -263,10 +324,10 @@ const Forex5 = () => {
                                 <tr
                                     key={selectedCurrency.currency}
                                     className={`hover:bg-gray-300 ${selectedRowIndex % 2 === 0 ? 'bg-gray-100' : 'bg-gray-200'}`}
-                                    onClick={() => handleRemoveClick(selectedIndex)}
+                                    onClick={() => handleRowClick(selectedIndex)}
                                 >
                                     <td className="py-2 px-4 border-b text-left">
-                                        {selectedRows.includes(selectedIndex) ? <span className="full-star"></span> : <span className="empty-star"></span>}
+                                        <span className={selectedRows.includes(selectedIndex) ? "full-star" : "empty-star"}></span>
                                     </td>
                                     <td className="py-2 px-4 border-b text-left text-sm">{selectedCurrency.currency}</td>
                                     <td className="py-2 px-4 border-b text-left text-sm">{selectedCurrency.rate}</td>
@@ -281,6 +342,8 @@ const Forex5 = () => {
                         return null;
                     })}
                 </tbody>
+
+
             </table>
         </div>
     );

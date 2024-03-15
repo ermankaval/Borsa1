@@ -52,10 +52,61 @@ const Forex5 = () => {
             } else {
                 console.error('Invalid response format or missing data');
             }
+            return data;
         } catch (error) {
             console.error(error);
         }
     };
+
+    const initializeData = async () => {
+        try {
+            // Forex verilerini al
+            const data = await fetchData();
+
+            const user = auth.currentUser;
+            console.log(user.displayName);
+            if (user) {
+                // Firestore'dan favori verileri al
+                const favoritesData = await loadFavoritesFromFirestore();
+                console.log(favoritesData);
+                console.log("bura", forexData.currency);
+                // Favori verilerin tablodaki indekslerini bul
+                const selectedRows = favoritesData.map((favorite) => {
+                    const indexInCurrentPage = data.findIndex((currency) => {
+                        return currency.currency === favorite.symbol;
+                    });
+
+                    if (indexInCurrentPage !== -1) {
+                        return indexInCurrentPage + Math.floor(indexInCurrentPage / perPage);
+                    } else {
+                        return -1; // Geçersiz indeks
+                    }
+                });
+
+                console.log("SelectedRow:", selectedRows);
+
+                // Yıldız işaretlemesini sağlamak için selectedRows dizisini güncelleyin
+                setSelectedRows(selectedRows);
+            } else {
+                console.error('User not logged in');
+            }
+        } catch (error) {
+            console.error('Error initializing data:', error);
+        }
+    };
+
+    useEffect(() => {
+        const unsubscribe = auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                await initializeData(); // await kullanarak initializeData fonksiyonunu bekleyin
+
+                // Forex verilerini konsola yazdırın
+                // console.log("Forex Data:", forexData);
+            }
+        });
+
+        return unsubscribe;
+    }, []);
 
 
 
@@ -76,7 +127,7 @@ const Forex5 = () => {
             } else {
                 console.error('User not logged in');
             }
-            console.log('Favorites Data:', data);
+
             return data;
         } catch (error) {
             console.error('Error getting Firestore data:', error);
@@ -86,58 +137,17 @@ const Forex5 = () => {
 
 
 
-    const initializeData = async () => {
-        try {
-            await fetchData();
-
-            const user = auth.currentUser;
-            // console.log(user)
-            if (user) {
-                const favoritesData = await loadFavoritesFromFirestore();
-                const selectedRows = favoritesData.map((favorite) => {
-                    const indexInCurrentPage = forexData.findIndex((currency) => currency.currency === favorite.symbol);
-                    return indexInCurrentPage + Math.floor(indexInCurrentPage / perPage);
-                });
-
-                // Güncellendi: Eğer sembol değeri tablodaki sembolle aynıysa, yıldızı işaretle
-                const updatedSelectedRows = [...selectedRows];
-                updatedSelectedRows.forEach((selectedIndex) => {
-                    const selectedCurrency = forexData[selectedIndex];
-                    if (selectedCurrency && favoritesData.some((favorite) => favorite.symbol === selectedCurrency.currency)) {
-                        const tableRowIndex = selectedIndex - (currentPageTop - 1) * perPage;
-                        if (tableRowIndex >= 0 && tableRowIndex < perPage) {
-                            const tableIndex = currentPageTop * perPage - perPage + tableRowIndex;
-                            if (!selectedRows.includes(tableIndex)) {
-                                selectedRows.push(tableIndex);
-                            }
-                        }
-                    }
-                });
-
-                setSelectedRows(selectedRows);
-            } else {
-                console.error('User not logged in');
-            }
-        } catch (error) {
-            console.error('Error initializing data:', error);
-        }
-    };
 
 
 
-    useEffect(() => {
-        const unsubscribe = auth.onAuthStateChanged((user) => {
-            if (user) {
-                initializeData();
-            }
-        });
 
-        return unsubscribe;
-    }, []);
 
-    const handleRowClick = async (index) => {
+
+    const handleRowClick = async (tableRowIndex) => {
+        // Tablodaki satırın indeksini elde edin
+        const index = currentPageTop * perPage - perPage + tableRowIndex;
+
         const updatedSelectedRows = [...selectedRows];
-
         const selectedIndex = updatedSelectedRows.indexOf(index);
 
         if (selectedIndex === -1) {
@@ -160,8 +170,11 @@ const Forex5 = () => {
             localStorage.setItem('selectedRows', JSON.stringify(updatedSelectedRows));
         }
 
+        // Update state with the updatedSelectedRows array
         setSelectedRows(updatedSelectedRows);
     };
+
+
 
 
 
@@ -236,11 +249,6 @@ const Forex5 = () => {
             console.error('Error saving data to Firestore:', error);
         }
     };
-
-
-
-
-
 
     const indexOfLastRow = currentPageTop * perPage;
     const indexOfFirstRow = indexOfLastRow - perPage;
@@ -342,8 +350,6 @@ const Forex5 = () => {
                         return null;
                     })}
                 </tbody>
-
-
             </table>
         </div>
     );

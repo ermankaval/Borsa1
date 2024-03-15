@@ -9,11 +9,29 @@ import { useRouter } from 'next/router';
 // import firebase from '../components/firebase';
 import { auth } from '../components/firebase';
 
+
+
+
+
 const Navbar = () => {
     const { selectedCurrenciesCount } = useCurrencyContext();
     const [scrolled, setScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const router = useRouter();
+
+    const [userName, setUserName] = useState(null);
+
+    const getUserName = () => {
+        const user = auth.currentUser;
+        if (user) {
+            setUserName(user.displayName);
+        }
+    };
+
+    useEffect(() => {
+        getUserName();
+    }, []);
+
 
     useEffect(() => {
         const handleScroll = () => {
@@ -46,9 +64,15 @@ const Navbar = () => {
                 {/* Removed the container class */}
                 <div className='flex justify-between items-center w-full'>
                     <Link href="/">
-                        <Logo
-                            style={`h-12 w-[80px] ${scrolled ? 'text-white' : 'text-black'}`} />
+                        <div className="flex items-center">
+                            <Logo
+                                style={`h-12 w-[80px] ${scrolled ? 'text-white' : 'text-black'}`}
+                            />
+                            {userName && <span className="ml-2 text-white">{userName}</span>}
+                        </div>
                     </Link>
+
+
                     <ul className='hidden space-x-4 md:flex'>
                         <li className='headerLink'>
                             <Link href="/Gallery">

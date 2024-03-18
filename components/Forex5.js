@@ -8,6 +8,7 @@ const Forex5 = () => {
     const [selectedRows, setSelectedRows] = useState({});
     const [currentPageTop, setCurrentPageTop] = useState(1);
     const [perPage, setPerPage] = useState(10);
+    const [searchTerm, setSearchTerm] = useState('');
 
     const fetchData = async () => {
         try {
@@ -177,9 +178,17 @@ const Forex5 = () => {
         setCurrentPageTop(1);
     };
 
+    const handleSearchChange = (e) => {
+        setSearchTerm(e.target.value);
+    };
+
+    const filteredRows = forexData.filter((row) =>
+        row.currency.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
     const indexOfLastRow = currentPageTop * perPage;
     const indexOfFirstRow = indexOfLastRow - perPage;
-    const currentRows = forexData.slice(indexOfFirstRow, indexOfLastRow);
+    const currentRows = filteredRows.slice(indexOfFirstRow, indexOfLastRow);
 
     const paginate = (pageNumber) => {
         setCurrentPageTop(pageNumber);
@@ -198,6 +207,16 @@ const Forex5 = () => {
                     <option value={20}>20</option>
                     <option value={30}>30</option>
                 </select>
+            </div>
+
+            <div className="flex justify-start mb-4">
+                <input
+                    type="text"
+                    placeholder="Forex Symbol..."
+                    value={searchTerm}
+                    onChange={handleSearchChange}
+                    className="border p-2 rounded text-sm h-8"
+                />
             </div>
 
             <table className="min-w-full bg-white border border-gray-300 rounded-lg overflow-hidden">
@@ -234,9 +253,9 @@ const Forex5 = () => {
 
             <Pagination
                 perPage={perPage}
-                totalRows={forexData.length}
+                totalRows={filteredRows.length}
                 currentPage={currentPageTop}
-                paginate={setCurrentPageTop}
+                paginate={paginate}
             />
 
 

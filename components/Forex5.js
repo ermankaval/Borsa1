@@ -182,6 +182,16 @@ const Forex5 = () => {
         setSearchTerm(e.target.value);
     };
 
+    const handleSort = () => {
+        // Change (%)" başlığına tıklandığında sıralama yap
+        const sortedRows = [...forexData].sort((a, b) => parseFloat(a.change) - parseFloat(b.change));
+        // Ters yönde sıralamak için kontrol
+        const isAscending = JSON.stringify(forexData) === JSON.stringify(sortedRows);
+        // Sıralamayı ters çevir
+        const updatedRows = isAscending ? sortedRows.reverse() : sortedRows;
+        setForexData(updatedRows);
+    };
+
     const filteredRows = forexData.filter((row) =>
         row.currency.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -212,7 +222,7 @@ const Forex5 = () => {
             <div className="flex justify-start mb-4">
                 <input
                     type="text"
-                    placeholder="Forex Symbol..."
+                    placeholder="ForexSymbol Search..."
                     value={searchTerm}
                     onChange={handleSearchChange}
                     className="border p-2 rounded text-sm h-8"
@@ -225,7 +235,7 @@ const Forex5 = () => {
                         <th className="py-2 px-4 border-b text-left">Add to Fav</th>
                         <th className="py-2 px-4 border-b text-left">Currency</th>
                         <th className="py-2 px-4 border-b text-left">Rate</th>
-                        <th className="py-2 px-4 border-b text-left">Change (%)</th>
+                        <th className="py-2 px-4 border-b text-left cursor-pointer" onClick={handleSort}>Change (%)</th>
                         <th className="py-2 px-4 border-b text-left">Direction</th>
                     </tr>
                 </thead>
@@ -265,7 +275,7 @@ const Forex5 = () => {
                         <th className="py-2 px-4 border-b text-left">Favorites</th>
                         <th className="py-2 px-4 border-b text-left">Currency</th>
                         <th className="py-2 px-4 border-b text-left">Rate</th>
-                        <th className="py-2 px-4 border-b text-left">Change (%)</th>
+                        <th className="py-2 px-4 border-b text-left cursor-pointer" onClick={handleSort}>Change (%)</th>
                         <th className="py-2 px-4 border-b text-left"></th>
                     </tr>
                 </thead>

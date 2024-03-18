@@ -103,3 +103,13 @@ table {
     /* Seçilen satırlarda yıldız rengini korumak için */
 }
 
+/* styles.css */
+
+/* Küçük boyutlar için Pagination bileşeni için windchill sınıfları */
+.winchill .pagination {
+    font-size: 0.5rem; /* Örnek olarak font boyutunu küçültebilirsiniz */
+}
+
+.winchill .pagination .page-link {
+    padding: 0.25rem 0.5rem; /* Sayfa bağlantıları için paddingi küçültün */
+}

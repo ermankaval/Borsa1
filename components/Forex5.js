@@ -204,6 +204,10 @@ const Forex5 = () => {
         setCurrentPageTop(pageNumber);
     };
 
+    const handleClear = () => {
+        setSearchTerm(""); // setSearchTerm fonksiyonu, state içerisinde searchTerm değerini güncellemek için kullanılıyor.
+    };
+
     return (
         <div>
             <div className="flex justify-start mb-4 mt-10">
@@ -222,11 +226,17 @@ const Forex5 = () => {
             <div className="flex justify-start mb-4">
                 <input
                     type="text"
-                    placeholder="ForexSymbol Search..."
+                    placeholder="Symbol Search..."
                     value={searchTerm}
                     onChange={handleSearchChange}
                     className="border p-2 rounded text-sm h-8"
                 />
+                <button
+                    onClick={handleClear}
+                    className="border ml-2 p-2 bg-slate-300 rounded text-sm h-8"
+                >
+                    Clear
+                </button>
             </div>
 
             <table className="min-w-full bg-white border border-gray-300 rounded-lg overflow-hidden">
@@ -260,14 +270,13 @@ const Forex5 = () => {
                 </tbody>
             </table>
 
-
             <Pagination
                 perPage={perPage}
                 totalRows={filteredRows.length}
                 currentPage={currentPageTop}
                 paginate={paginate}
+                wrapperClasses="windchill"
             />
-
 
             <table className="min-w-full bg-white border border-gray-300 rounded-lg overflow-hidden">
                 <thead>
@@ -308,8 +317,6 @@ const Forex5 = () => {
                 </tbody>
             </table>
         </div>
-
-
     );
 };
 
